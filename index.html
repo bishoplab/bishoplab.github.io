@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bishop lab group</title>
+  
+  <!-- Link to Google Fonts for Jost font -->
+  <link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;700&display=swap" rel="stylesheet">
+
+  <link rel="icon" href="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRKBlEjJhMMLaSSzN4ucjIxORyhXlN_inv9ww&s" type="image/svg+xml">
+  
+  <style>
+    /* General body style */
+    body {
+      font-family: 'Jost', sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: row;
+    }
+
+    /* Sidebar style for Table of Contents */
+    .sidebar {
+      width: 140px; /* Narrow sidebar */
+      background-color: #f4f4f4;
+      padding-top: 10px; /* Move the heading up */
+      position: fixed;
+      height: 100%;
+      overflow-y: auto; /* Allow vertical scrolling if the content overflows */
+      font-size: 22px; /* Set font size */
+      padding-left: 10px;
+      top: 130px; /* Start right below the header */
+      margin-top: 0; /* Ensure the sidebar starts from the top without gaps */
+    }
+    
+    .sidebar h2 {
+      margin-top: 0; /* Remove any margin at the top */
+      margin-bottom: 5px; /* Reduce space below the heading */
+      padding-bottom: 5px; /* Ensure there's no extra padding under the heading */
+    }
+    
+    .sidebar a {
+      display: block;
+      color: #000;
+      padding: 8px 10px; /* Add a bit of padding on the sides for the links */
+      text-decoration: none;
+      margin-bottom: 5px; /* Reduce space between links */
+      font-weight: bold;
+    }
+    
+    .sidebar a:hover {
+      background-color: #ddd;
+    }
+
+    /* Header style - make it extend across the whole page */
+    .header {
+      width: 100%;
+      background-color: #87CEEB; /* Sky blue color */
+      color: white; /* White text color */
+      text-align: left; /* Align text to the left */
+      padding: 30px 30px; /* Padding around the text */
+      font-size: 30px; /* Larger font size */
+      font-weight: bold; /* Bold text */
+      position: fixed; /* Fix the header at the top */
+      top: 0;
+      left: 0;
+      z-index: 1; /* Make sure header is on top of the content */
+      height: 75px; /* Ensure the header is tall enough */
+    }
+
+    /* LinkedIn, ORCID, and Twitter icon styling */
+    .icon {
+      position: absolute;
+      bottom: 10px; /* Place the icons at the bottom of the header */
+      left: 30px; /* Move icons to the left within the header */
+      display: flex; /* Use flexbox to arrange icons side by side */
+      gap: 10px; /* Add space between the icons */
+    }
+
+    .icon a {
+      display: inline-block; /* Ensure that the icons are properly aligned */
+    }
+
+    .icon img {
+      width: 30px; /* Set the size of the icon */
+      height: 30px;
+    }
+
+    a img {
+            transition: transform 0.3s ease, animation 0.3s ease; /* Smooth transitions */
+    }
+
+        /* Hover effect: Scale up and apply shaking animation */
+        a:hover img {
+            transform: scale(1.1); /* Make the image larger */
+            animation: shake 0.3s ease-in-out; /* Trigger shaking animation */
+    }
+
+        /* Keyframes for the shake effect */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }   /* Start and end at original position */
+            25% { transform: translateX(-5px); }    /* Move left */
+            50% { transform: translateX(5px); }     /* Move right */
+            75% { transform: translateX(-5px); }    /* Move left again */
+    }
+
+    /* Main content area */
+    .content {
+      margin-left: 150px; /* Space for the sidebar */
+      padding: 20px;
+      flex-grow: 1;
+      margin-top: 110px; /* Ensure content doesn't overlap with the fixed header */
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header section (Sky blue banner) -->
+  <div class="header">
+    Bishop lab group
+
+    <!-- LinkedIn, ORCID, and Twitter icons at the bottom left of the header -->
+    <div class="icon">
+      <!-- LinkedIn Icon -->
+      <a href="https://www.linkedin.com/in/dale-taylor-5004a41b5/" target="_blank">
+        <img src="https://cdn.worldvectorlogo.com/logos/linkedin-icon.svg" alt="LinkedIn">
+      </a>
+
+      <!-- ORCID Icon -->
+      <a href="https://orcid.org/0000-0001-6766-6948" target="_blank"> <!-- Replace with your actual ORCID ID -->
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/06/ORCID_iD.svg/2048px-ORCID_iD.svg.png" alt="ORCID" style="width: 30px; height: 30px;">
+      </a>
+
+      <!-- Twitter Icon -->
+      <a href="https://x.com/DaleFTaylor" target="_blank"> <!-- Replace with your actual Twitter -->
+        <img src="https://www.svgrepo.com/show/11841/twitter.svg" alt="Twitter" style="width: 30px; height: 30px;">
+      </a>
+
+      <!-- Github Icon -->
+      <a href="https://github.com/daleftaylor" target="_blank"> <!-- Replace with your actual Twitter -->
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Octicons-mark-github.svg/768px-Octicons-mark-github.svg.png" alt="Twitter" style="width: 30px; height: 30px;">
+      </a>
+      
+    </div>
+  </div>
+
+  <!-- Sidebar with Table of Contents -->
+  <div class="sidebar">
+    <a href="home.html">Home</a> <!-- Link to the main page -->
+    <a href="projects.html">Experience</a> <!-- Link to the Projects page -->
+    <a href="tools.html">Projects</a> <!-- Link to the Projects page -->
+    <a href="members.html">Contact</a> <!-- Link to the Contact page -->
+  </div>
+
+ <div class="content">
+
+    <!-- Welcome Section -->
+    <div class="welcome">
+      <h2>Welcome</h2>
+      <ul>
+        <li>Under construction!</li>
+      </ul>
+    </div>
+
+  </div>
+
+</body>
+</html>
