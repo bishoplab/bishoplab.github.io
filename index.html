@@ -11,7 +11,6 @@
   <link rel="icon" href="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRKBlEjJhMMLaSSzN4ucjIxORyhXlN_inv9ww&s" type="image/svg+xml">
   
   <style>
-    /* General body style */
     body {
       font-family: 'Jost', sans-serif;
       margin: 0;
@@ -20,32 +19,31 @@
       flex-direction: row;
     }
 
-    /* Sidebar style for Table of Contents */
     .sidebar {
-      width: 150px; /* Narrow sidebar */
+      width: 150px;
       background-color: #f4f4f4;
-      padding-top: 10px; /* Move the heading up */
+      padding-top: 10px;
       position: fixed;
       height: 100%;
-      overflow-y: auto; /* Allow vertical scrolling if the content overflows */
-      font-size: 22px; /* Set font size */
+      overflow-y: auto;
+      font-size: 22px;
       padding-left: 10px;
-      top: 130px; /* Start right below the header */
-      margin-top: 0; /* Ensure the sidebar starts from the top without gaps */
+      top: 130px;
+      margin-top: 0;
     }
     
     .sidebar h2 {
-      margin-top: 0; /* Remove any margin at the top */
-      margin-bottom: 5px; /* Reduce space below the heading */
-      padding-bottom: 5px; /* Ensure there's no extra padding under the heading */
+      margin-top: 0;
+      margin-bottom: 5px;
+      padding-bottom: 5px;
     }
     
     .sidebar a {
       display: block;
       color: #000;
-      padding: 8px 10px; /* Add a bit of padding on the sides for the links */
+      padding: 8px 10px;
       text-decoration: none;
-      margin-bottom: 5px; /* Reduce space between links */
+      margin-bottom: 5px;
       font-weight: bold;
     }
     
@@ -53,118 +51,97 @@
       background-color: #ddd;
     }
 
-    /* Header style - make it extend across the whole page */
     .header {
       width: 100%;
-      background-color: #82e781; /* forest green color */
-      color: white; /* White text color */
-      text-align: left; /* Align text to the left */
-      padding: 30px 30px; /* Padding around the text */
-      font-size: 30px; /* Larger font size */
-      font-weight: bold; /* Bold text */
-      position: fixed; /* Fix the header at the top */
+      background-color: #82e781;
+      color: white;
+      text-align: left;
+      padding: 30px 30px;
+      font-size: 30px;
+      font-weight: bold;
+      position: fixed;
       top: 0;
       left: 0;
-      z-index: 1; /* Make sure header is on top of the content */
-      height: 75px; /* Ensure the header is tall enough */
+      z-index: 1;
+      height: 75px;
     }
 
-    /* LinkedIn, ORCID, and Twitter icon styling */
-    .icon {
-      position: absolute;
-      bottom: 10px; /* Place the icons at the bottom of the header */
-      left: 30px; /* Move icons to the left within the header */
-      display: flex; /* Use flexbox to arrange icons side by side */
-      gap: 10px; /* Add space between the icons */
-    }
-
-    .icon a {
-      display: inline-block; /* Ensure that the icons are properly aligned */
-    }
-
-    .icon img {
-      width: 30px; /* Set the size of the icon */
-      height: 30px;
-    }
-
-    a img {
-            transition: transform 0.3s ease, animation 0.3s ease; /* Smooth transitions */
-    }
-
-        /* Hover effect: Scale up and apply shaking animation */
-        a:hover img {
-            transform: scale(1.1); /* Make the image larger */
-            animation: shake 0.3s ease-in-out; /* Trigger shaking animation */
-    }
-
-        /* Keyframes for the shake effect */
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }   /* Start and end at original position */
-            25% { transform: translateX(-5px); }    /* Move left */
-            50% { transform: translateX(5px); }     /* Move right */
-            75% { transform: translateX(-5px); }    /* Move left again */
-    }
-
-    /* Main content area */
     .content {
-      margin-left: 150px; /* Space for the sidebar */
+      margin-left: 150px;
       padding: 20px;
       flex-grow: 1;
-      margin-top: 110px; /* Ensure content doesn't overlap with the fixed header */
+      margin-top: 110px;
+    }
+
+    .prof-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .icon-small a img {
+      width: 25px;
+      height: 25px;
+      transition: transform 0.3s ease;
+    }
+
+    .icon-small a:hover img {
+      transform: scale(1.1);
+    }
+
+    .prof-details {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      margin-top: 10px;
+    }
+
+    .prof-image {
+      width: 150px;
+      height: auto;
+      border-radius: 10px;
     }
   </style>
 </head>
 <body>
 
-  <!-- Header section (Fors banner) -->
   <div class="header">
     Bishop lab group
-
-    <!-- LinkedIn, ORCID, and Twitter icons at the bottom left of the header -->
-    <div class="icon">
-      <!-- LinkedIn Icon -->
-      <a href="https://www.linkedin.com/in/dale-taylor-5004a41b5/" target="_blank">
-        <img src="https://cdn.worldvectorlogo.com/logos/linkedin-icon.svg" alt="LinkedIn">
-      </a>
-
-      <!-- ORCID Icon -->
-      <a href="https://orcid.org/0000-0001-6766-6948" target="_blank"> <!-- Replace with your actual ORCID ID -->
-        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/06/ORCID_iD.svg/2048px-ORCID_iD.svg.png" alt="ORCID" style="width: 30px; height: 30px;">
-      </a>
-
-      <!-- Twitter Icon -->
-      <a href="https://x.com/DaleFTaylor" target="_blank"> <!-- Replace with your actual Twitter -->
-        <img src="https://www.svgrepo.com/show/11841/twitter.svg" alt="Twitter" style="width: 30px; height: 30px;">
-      </a>
-
-      <!-- Github Icon -->
-      <a href="https://github.com/daleftaylor" target="_blank"> <!-- Replace with your actual Twitter -->
-        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Octicons-mark-github.svg/768px-Octicons-mark-github.svg.png" alt="Twitter" style="width: 30px; height: 30px;">
-      </a>
-      
-    </div>
   </div>
 
-  <!-- Sidebar with Table of Contents -->
   <div class="sidebar">
-    <a href="index.html">People</a> <!-- Link to the main page -->
-    <a href="projects.html">Projects</a> <!-- Link to the Projects page -->
-    <a href="publications.html">Publications</a> <!-- Link to the Projects page -->
-    <a href="tools.html">Tools</a> <!-- Link to the Contact page -->
+    <a href="index.html">People</a>
+    <a href="projects.html">Projects</a>
+    <a href="publications.html">Publications</a>
+    <a href="tools.html">Tools</a>
   </div>
 
- <div class="content">
-
-    <!-- Welcome Section -->
+  <div class="content">
     <div class="welcome">
       <h2>Who are we?</h2>
-      <h3>Prof. David Bishop</h3>
-      <ul>
-        Professor David Bishop is a world leader in muscle exercise physiology with more 250 publications and an h-index of 73. His research has been funded by multiple grants from the ARC, the NHMRC, and the Australian Defence Force, and has received more than 100 invitations to speak at international conferences around the world.
-      </ul>
+      
+      <div class="prof-header">
+        <h3>Prof. ddd</h3>
+        <div class="icon-small">
+          <a href="https://www.linkedin.com/in/david-j-bishop-b4172129/" target="_blank">
+            <img src="https://cdn.worldvectorlogo.com/logos/linkedin-icon.svg" alt="LinkedIn">
+          </a>
+          <a href="https://orcid.org/0000-0002-6956-9188" target="_blank">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/06/ORCID_iD.svg/2048px-ORCID_iD.svg.png" alt="ORCID">
+          </a>
+          <a href="https://x.com/BlueSpotScience" target="_blank">
+            <img src="https://www.svgrepo.com/show/11841/twitter.svg" alt="Twitter">
+          </a>
+        </div>
+      </div>
+      
+      <div class="prof-details">
+        <img src="https://theawesomedaily.com/wp-content/uploads/2017/09/smiling-cats-pictures-feat-1.jpg" alt="Prof. ddd Image" class="prof-image">
+        <p>Professor David Bishop is a world leader in muscle exercise physiology with more 250 publications and an h-index of 73. His research has been funded by multiple grants from the ARC, the NHMRC, and the Australian Defence Force, and has received more than 100 invitations to speak at international conferences around the world.</p>
+      </div>
     </div>
-
   </div>
 
 </body>
 </html>
+
