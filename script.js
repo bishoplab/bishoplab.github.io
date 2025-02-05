@@ -30,13 +30,20 @@ async function fetchPublications(orcidIds) {
                     doi = externalIds[0]?.['external-id-url']?.value || "#";
                 }
 
-                // Extract authors and bold the ORCID-linked ones
-                let authors = (workSummary?.['contributors']?.['contributor'] || []).map(contributor => {
-                    let authorName = contributor?.['credit-name']?.value || "Unknown Author";
-                    return orcidIds.includes(contributor?.['contributor-orcid']?.path) 
-                        ? `<strong>${authorName}</strong>` 
-                        : authorName;
-                }).join(", ");
+                // Extract authors correctly
+                let authors = [];
+                const contributors = workSummary?.contributors?.contributor || [];
+
+                if (contributors.length > 0) {
+                    authors = contributors.map(contributor => {
+                        let authorName = contributor?.['credit-name']?.value || `ORCID: ${contributor?.['contributor-orcid']?.path || "Unknown"}`;
+                        return orcidIds.includes(contributor?.['contributor-orcid']?.path)
+                            ? `<strong>${authorName}</strong>`  // Bold ORCID-linked authors
+                            : authorName;
+                    });
+                } else {
+                    authors = ["Unknown"];
+                }
 
                 // Generate unique key for deduplication (Title + Year)
                 const key = `${title}_${year}`;
@@ -44,10 +51,10 @@ async function fetchPublications(orcidIds) {
                 if (publicationsMap.has(key)) {
                     // Merge authors if duplicate
                     let existingData = publicationsMap.get(key);
-                    existingData.authors = Array.from(new Set([...existingData.authors.split(", "), ...authors.split(", ")])).join(", ");
+                    existingData.authors = Array.from(new Set([...existingData.authors.split(", "), ...authors])).join(", ");
                     publicationsMap.set(key, existingData);
                 } else {
-                    publicationsMap.set(key, { title, year, journal, doi, authors });
+                    publicationsMap.set(key, { title, year, journal, doi, authors: authors.join(", ") });
                 }
             });
 
@@ -66,12 +73,12 @@ async function fetchPublications(orcidIds) {
         publicationDiv.classList.add('publication');
 
         publicationDiv.innerHTML = `
-            <h3 style="font-size: 16px; margin-bottom: 5px; margin-top: 5px;">
+            <h3 style="font-size: 16px; margin-bottom: 5px;">
                 <a href="${pub.doi}" target="_blank">${pub.title}</a>
             </h3>
-            <p style="font-size: 12px; margin: 2px 0;"><strong>Year:</strong> ${pub.year}</p>
-            <p style="font-size: 12px; margin: 2px 0;"><strong>Journal:</strong> ${pub.journal}</p>
-            <p style="font-size: 12px; margin: 2px 0;"><strong>Authors:</strong> ${pub.authors}</p>
+            <p style="font-size: 14px; margin: 2px 0;"><strong>Year:</strong> ${pub.year}</p>
+            <p style="font-size: 14px; margin: 2px 0;"><strong>Journal:</strong> ${pub.journal}</p>
+            <p style="font-size: 14px; margin: 2px 0;"><strong>Authors:</strong> ${pub.authors}</p>
         `;
 
         publicationsContainer.appendChild(publicationDiv);
