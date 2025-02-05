@@ -1,97 +1,71 @@
-const SCOPUS_API_KEY = "7a5c846dc5771fe34d62b02ab2f31c4d"; 
-const scopusIds = ["57196098200", "7401913619", "57426146300", "23501819100"]; // Replace with actual Scopus Author IDs
+const apiKey = "7a5c846dc5771fe34d62b02ab2f31c4d"; // Replace with your Scopus API key
+const authorIds = ["57196098200", "7401913619", "57426146300", "23501819100"]; // Replace with actual Scopus author IDs
 const topics = ["Mitochondrion", "Skeletal Muscle", "Circadian Rhythm", "Resistance Training", "Endurance", "Carbohydrate"];
+let publications = [];
+let visiblePublications = 20;
 
-let allPublications = [];
-let filteredPublications = [];
-let loadedCount = 0;
-const loadStep = 20;
-let selectedTopic = null;
+// Initialize dropdown filter
+document.getElementById("topicFilter").innerHTML = topics.map(topic => `<option value="${topic}">${topic}</option>`).join('');
 
-async function fetchScopusPublications() {
-    document.getElementById("publications").innerHTML = "<p>Loading publications...</p>";
-    
-    const url = `https://api.elsevier.com/content/search/scopus?query=AU-ID(${scopusIds.join(' OR ')})&apiKey=${SCOPUS_API_KEY}&httpAccept=application/json&sort=+coverDate`;
-    
+document.getElementById("topicFilter").addEventListener("change", filterPublications);
+
+async function fetchPublications() {
     try {
-        const response = await fetch(url, { method: "GET" });
-        if (!response.ok) throw new Error(`Scopus API error: ${response.status}`);
-        
-        const data = await response.json();
-        const entries = data["search-results"]?.entry || [];
-
-        allPublications = entries.map(entry => ({
-            title: entry["dc:title"] || "Untitled",
-            year: entry["prism:coverDate"]?.split("-")[0] || "N/A",
-            journal: entry["prism:publicationName"] || "N/A",
-            doi: entry["prism:doi"] || null,
-            eid: entry["eid"],
-            keywords: entry["authkeywords"] ? entry["authkeywords"].split(", ") : []
-        })).sort((a, b) => parseInt(b.year) - parseInt(a.year));
-        
-        applyFilter();
+        let allPublications = [];
+        for (const authorId of authorIds) {
+            const response = await fetch(`https://api.elsevier.com/content/search/scopus?query=AU-ID(${authorId})&apiKey=${apiKey}&count=100&sort=-date`);
+            const data = await response.json();
+            if (data['search-results'] && data['search-results']['entry']) {
+                allPublications.push(...data['search-results']['entry']);
+            }
+        }
+        publications = allPublications;
+        displayPublications();
     } catch (error) {
-        console.error("Scopus fetch failed", error);
+        console.error("Error fetching data from Scopus API", error);
+        document.getElementById("publications").innerHTML = "<p>Failed to load publications.</p>";
     }
 }
 
-function applyFilter() {
-    filteredPublications = selectedTopic
-        ? allPublications.filter(pub => pub.keywords.includes(selectedTopic))
-        : allPublications;
-
-    loadedCount = 0;
-    document.getElementById("publications").innerHTML = "";
-    loadMorePublications();
-}
-
-function loadMorePublications() {
-    const publicationsContainer = document.getElementById("publications");
-
-    for (let i = loadedCount; i < loadedCount + loadStep && i < filteredPublications.length; i++) {
-        const pub = filteredPublications[i];
-        const publicationDiv = document.createElement("div");
-        publicationDiv.classList.add("publication");
-
-        publicationDiv.innerHTML = `
-            <h3 style="font-size: 14px; margin: 0 0 5px;">
-                <a href="https://doi.org/${pub.doi}" target="_blank" style="text-decoration: none; color: #0077cc;">${pub.title}</a>
-            </h3>
-            <p style="font-size: 12px; margin: 2px 0;"><strong>Year:</strong> ${pub.year}</p>
-            <p style="font-size: 12px; margin: 2px 0;"><strong>Journal:</strong> ${pub.journal}</p>
-        `;
-
-        publicationsContainer.appendChild(publicationDiv);
-    }
-
-    loadedCount += loadStep;
-}
-
-function handleScroll() {
-    if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 100) {
-        loadMorePublications();
-    }
-}
-
-function createDropdown() {
-    const filterContainer = document.getElementById("filter");
-    const dropdown = document.createElement("select");
-    dropdown.innerHTML = `
-        <option value="">All Topics</option>
-        ${topics.map(topic => `<option value="${topic}">${topic}</option>`).join("")}
-    `;
-
-    dropdown.addEventListener("change", event => {
-        selectedTopic = event.target.value || null;
-        applyFilter();
-    });
+function displayPublications() {
+    const container = document.getElementById("publications");
+    container.innerHTML = "";
     
-    filterContainer.appendChild(dropdown);
+    let filteredPublications = publications.slice(0, visiblePublications);
+    
+    filteredPublications.forEach(pub => {
+        const title = pub["dc:title"] || "Untitled";
+        const year = pub["prism:coverDate"]?.split("-")[0] || "N/A";
+        const journal = pub["prism:publicationName"] || "N/A";
+        const link = pub["prism:doi"] ? `https://doi.org/${pub["prism:doi"]}` : "#";
+        
+        const pubDiv = document.createElement("div");
+        pubDiv.classList.add("publication");
+        pubDiv.innerHTML = `
+            <h3 style="margin-top: 5px;"><a href="${link}" target="_blank">${title}</a></h3>
+            <p><strong>Year:</strong> ${year}</p>
+            <p><strong>Journal:</strong> ${journal}</p>
+        `;
+        container.appendChild(pubDiv);
+    });
 }
 
-window.addEventListener("scroll", handleScroll);
-document.addEventListener("DOMContentLoaded", () => {
-    createDropdown();
-    fetchScopusPublications();
+function filterPublications() {
+    const selectedTopic = document.getElementById("topicFilter").value.toLowerCase();
+    
+    if (selectedTopic) {
+        publications = publications.filter(pub => pub["dc:title"].toLowerCase().includes(selectedTopic));
+    }
+    visiblePublications = 20;
+    displayPublications();
+}
+
+window.addEventListener("scroll", () => {
+    if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 100) {
+        visiblePublications += 20;
+        displayPublications();
+    }
 });
+
+fetchPublications();
 
