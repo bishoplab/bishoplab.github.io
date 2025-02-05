@@ -104,7 +104,7 @@ function loadMorePublications() {
         publicationDiv.classList.add("publication");
 
         publicationDiv.innerHTML = `
-            <h3 style="font-size: 14px; margin: 0 0 5px;">
+            <h3 style="font-size: 14px; margin: 0 0 0px;">
                 <a href="https://doi.org/${pub.doi}" target="_blank" style="text-decoration: none; color: #0077cc;">${pub.title}</a>
             </h3>
             <p style="font-size: 12px; margin: 2px 0;"><strong>Year:</strong> ${pub.year}</p>
