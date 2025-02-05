@@ -154,4 +154,3 @@ window.addEventListener("scroll", () => {
 
 // Call fetchPublications initially with the scopusIds array
 fetchPublications(scopusIds);
-
