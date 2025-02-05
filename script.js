@@ -92,12 +92,12 @@ async function fetchPublications(scopusIds) {
         publicationDiv.classList.add("publication");
 
         publicationDiv.innerHTML = `
-            <h3 style="font-size: 16px; margin-bottom: 5px;">
+            <h3 style="font-size: 14px; margin-bottom: 5px;">
                 <a href="https://doi.org/${pub.doi}" target="_blank">${pub.title}</a>
             </h3>
-            <p style="font-size: 14px; margin: 2px 0;"><strong>Year:</strong> ${pub.year}</p>
-            <p style="font-size: 14px; margin: 2px 0;"><strong>Journal:</strong> ${pub.journal}</p>
-            <p style="font-size: 14px; margin: 2px 0;"><strong>Authors:</strong> ${formattedAuthors}</p>
+            <p style="font-size: 12px; margin: 2px 0;"><strong>Year:</strong> ${pub.year}</p>
+            <p style="font-size: 12px; margin: 2px 0;"><strong>Journal:</strong> ${pub.journal}</p>
+            <p style="font-size: 12px; margin: 2px 0;"><strong>Authors:</strong> ${formattedAuthors}</p>
         `;
 
         publicationsContainer.appendChild(publicationDiv);
