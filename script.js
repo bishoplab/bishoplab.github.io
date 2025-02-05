@@ -69,7 +69,7 @@ async function fetchPublications(scopusIds) {
             } else {
                 let existing = publicationsMap.get(key);
                 const newAuthors = await fetchAuthors(pub.eid);
-                existing.authors = [...existing.authors, ...newAuthors]; 
+                existing.authors = [...existing.authors, ...newAuthors];
                 publicationsMap.set(key, existing);
             }
         }
@@ -79,7 +79,7 @@ async function fetchPublications(scopusIds) {
         .filter(pub => pub.year !== "N/A")  // Ensure we exclude "N/A" years from sorting
         .sort((a, b) => parseInt(b.year) - parseInt(a.year)); // Sort from newest to oldest
 
-    document.getElementById("publications").innerHTML = ""; 
+    document.getElementById("publications").innerHTML = "";
 
     if (allPublications.length === 0) {
         document.getElementById("publications").innerHTML = "<p>No publications found.</p>";
@@ -97,7 +97,7 @@ function loadMorePublications() {
     for (let i = loadedCount; i < loadedCount + loadStep && i < filteredPublications.length; i++) {
         const pub = filteredPublications[i];
 
-        const authorList = Array.from(new Set(pub.authors.map(a => a.name))); 
+        const authorList = Array.from(new Set(pub.authors.map(a => a.name)));
         const formattedAuthors = authorList
             .map(name => {
                 const authorObj = pub.authors.find(a => a.name === name);
@@ -141,8 +141,23 @@ document.getElementById("keywordFilter").addEventListener("change", (event) => {
     loadMorePublications(); // Reload filtered publications
 });
 
+// Function to set up infinite scroll
+function setupInfiniteScroll() {
+    window.onscroll = function() {
+        const scrollHeight = document.documentElement.scrollHeight;
+        const scrollPosition = window.innerHeight + window.scrollY;
+
+        // If scrolled near bottom of page
+        if (scrollHeight - scrollPosition < 100) {
+            if (loadedCount < filteredPublications.length) {
+                loadMorePublications();
+            }
+        }
+    };
+}
+
 // Call fetchPublications initially with the scopusIds array
 fetchPublications(scopusIds);
 
-// Set up infinite scroll functionality
+// Call setupInfiniteScroll to enable the infinite scrolling feature
 setupInfiniteScroll();
