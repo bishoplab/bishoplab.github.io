@@ -8,8 +8,8 @@ const loadStep = 20; // Number of publications to load initially & on scroll
 let filteredPublications = []; // Stores the filtered publications
 
 // Function to fetch publications from Scopus API
-async function fetchScopusPublications(authorId) {
-    const url = `https://api.elsevier.com/content/search/scopus?query=AU-ID(${authorId})&apiKey=${API_KEY}&httpAccept=application/json&count=100`;
+async function fetchPublications(scopusIds) {
+    const url = `https://api.elsevier.com/content/search/scopus?query=AU-ID(${scopusIds.join(",")})&apiKey=${API_KEY}&httpAccept=application/json&count=100`;
 
     try {
         const response = await fetch(url, { method: "GET" });
