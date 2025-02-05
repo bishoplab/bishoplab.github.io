@@ -88,7 +88,7 @@ async function fetchPublications(scopusIds) {
     }
 
     filteredPublications = allPublications; // Initialize filtered list
-    loadMorePublications();
+    loadMorePublications(); // Load the first set of publications
 }
 
 // Function to load more publications, based on filtered results
@@ -140,7 +140,27 @@ document.getElementById("keywordFilter").addEventListener("change", (event) => {
     loadedCount = 0; // Reset loaded count for filtered results
     document.getElementById("publications").innerHTML = ""; // Clear the publications container
     loadMorePublications(); // Reload filtered publications
-});
+}
+
+// Function for infinite scroll - checks if the user has scrolled to the bottom of the page
+function setupInfiniteScroll() {
+    const publicationsContainer = document.getElementById("publications");
+
+    window.addEventListener("scroll", () => {
+        const scrollHeight = document.documentElement.scrollHeight;
+        const scrollPosition = window.innerHeight + window.scrollY;
+
+        if (scrollPosition >= scrollHeight - 5) { // 5px from the bottom
+            if (loadedCount < filteredPublications.length) {
+                loadMorePublications(); // Load more publications
+            }
+        }
+    });
+}
 
 // Call fetchPublications initially with the scopusIds array
 fetchPublications(scopusIds);
+
+// Set up infinite scroll functionality
+setupInfiniteScroll();
+
