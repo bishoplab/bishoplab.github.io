@@ -19,12 +19,20 @@ async function fetchPublications() {
         publicationsContainer.innerHTML = ''; // Clear previous content
 
         publications.forEach(publication => {
-            const workSummary = publication['work-summary'][0];  
-            const title = workSummary.title.title;
-            const year = workSummary['publication-date']?.year || "N/A";
-            const journal = workSummary['journal-title'] || "N/A";
-            const doi = workSummary['external-ids']?.['external-id'][0]?.['external-id-url']?.value || "#";
+            const workSummary = publication['work-summary'][0];
 
+            const title = workSummary?.title?.title?.value || "Untitled";
+            const year = workSummary?.['publication-date']?.year?.value || "N/A";
+            const journal = workSummary?.['journal-title']?.value || "N/A";
+
+            // Extract DOI or first available external link
+            let doi = "#";
+            const externalIds = workSummary?.['external-ids']?.['external-id'] || [];
+            if (externalIds.length > 0) {
+                doi = externalIds[0]?.['external-id-url']?.value || "#";
+            }
+
+            // Create publication entry
             const publicationDiv = document.createElement('div');
             publicationDiv.classList.add('publication');
 
@@ -45,3 +53,4 @@ async function fetchPublications() {
 
 // Load publications on page load
 fetchPublications();
+
