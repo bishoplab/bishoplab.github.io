@@ -130,6 +130,28 @@
     div {
       margin-bottom: 0px;
     }
+
+      .container {
+            margin: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #2d3e50;
+        }
+        .publication {
+            background-color: white;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 10px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .publication h2 {
+            margin: 0;
+            color: #2d3e50;
+        }
+        .publication p {
+            margin: 5px 0;
+        }
     
   </style>
 </head>
@@ -152,33 +174,47 @@
     <h2>Publications Feed</h2>
     <div id="publication-feed"></div>
 
-        <script>
-      // Replace 'YOUR_ORCID_ID' with the actual ORCID ID
-      const orcidId = 0000-0002-6956-9188; // Replace with the correct ORCID ID
+       async function fetchPublications() {
+            const orcidId = "0000-0002-6956-9188";  // Replace with your ORCID ID
+            const url = `https://pub.orcid.org/v3.0/${orcidId}/works`;
+            
+            try {
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
 
-      // Fetch publications from ORCID
-      axios.get(`https://pub.orcid.org/v3.0/${orcidId}/works`)
-        .then(response => {
-          const publications = response.data.group;
-          const publicationsList = document.getElementById('publications-list');
-          publicationsList.innerHTML = ''; // Clear the loading text
-          
-          // Loop through the publications and add them to the page
-          publications.forEach(pub => {
-            const pubItem = document.createElement('div');
-            pubItem.innerHTML = `
-              <p><strong>${pub['work-title']['title']['value']}</strong></p>
-              <p>${pub['publication-date']['year']['value']}</p>
-              <p>${pub['journal-title'] ? pub['journal-title']['value'] : 'No Journal Title'}</p>
-            `;
-            publicationsList.appendChild(pubItem);
-          });
-        })
-        .catch(error => {
-          const publicationsList = document.getElementById('publications-list');
-          publicationsList.innerHTML = 'Error fetching publications. Please check the ORCID ID and try again.';
-          console.error('Error fetching data:', error);
-        });
+                const data = await response.json();
+                const publications = data.group;
+
+                const publicationsContainer = document.getElementById('publications');
+                publicationsContainer.innerHTML = '';
+
+                publications.forEach(publication => {
+                    const publicationDiv = document.createElement('div');
+                    publicationDiv.classList.add('publication');
+                    
+                    const title = publication.workSummary[0].title.title;
+                    const year = publication.workSummary[0].publicationYear.year;
+                    const journal = publication.workSummary[0].journalTitle;
+
+                    publicationDiv.innerHTML = `
+                        <h2>${title}</h2>
+                        <p><strong>Year:</strong> ${year}</p>
+                        <p><strong>Journal:</strong> ${journal}</p>
+                    `;
+                    
+                    publicationsContainer.appendChild(publicationDiv);
+                });
+            } catch (error) {
+                console.error('Error fetching data from ORCID API', error);
+                document.getElementById('publications').innerHTML = '<p>Failed to load publications.</p>';
+            }
+        }
+
+        fetchPublications();
     </script>
       
     </div>
