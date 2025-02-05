@@ -32,6 +32,12 @@ async function fetchPublications() {
                 doi = externalIds[0]?.['external-id-url']?.value || "#";
             }
 
+            // Extract authors from contributors if available
+            let authors = "Unknown";
+            if (workSummary?.contributors?.contributor?.length > 0) {
+                authors = workSummary.contributors.contributor.map(c => c['credit-name']?.value || "Unknown").join(', ');
+            }
+
             // Create publication entry
             const publicationDiv = document.createElement('div');
             publicationDiv.classList.add('publication');
@@ -40,6 +46,7 @@ async function fetchPublications() {
                 <h3><a href="${doi}" target="_blank">${title}</a></h3>
                 <p><strong>Year:</strong> ${year}</p>
                 <p><strong>Journal:</strong> ${journal}</p>
+                <p><strong>Authors:</strong> ${authors}</p>
             `;
 
             publicationsContainer.appendChild(publicationDiv);
