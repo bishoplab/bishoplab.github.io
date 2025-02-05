@@ -88,7 +88,7 @@ async function fetchPublications(scopusIds) {
     }
 
     filteredPublications = allPublications; // Initialize filtered list
-    loadMorePublications();
+    loadMorePublications(); // Initial load
 }
 
 // Function to load more publications, based on filtered results
@@ -140,7 +140,21 @@ document.getElementById("keywordFilter").addEventListener("change", (event) => {
     loadedCount = 0; // Reset loaded count for filtered results
     document.getElementById("publications").innerHTML = ""; // Clear the publications container
     loadMorePublications(); // Reload filtered publications
+}
+
+// Infinite scroll logic
+window.addEventListener("scroll", () => {
+    const publicationsContainer = document.getElementById("publications");
+    const nearBottom = window.innerHeight + window.scrollY >= document.body.offsetHeight - 200; // Trigger when 200px from bottom
+
+    if (nearBottom && loadedCount < filteredPublications.length) {
+        loadMorePublications();
+    }
 });
+
+// Call fetchPublications initially with the scopusIds array
+fetchPublications(scopusIds);
+
 
 // Call fetchPublications initially with the scopusIds array
 fetchPublications(scopusIds);
