@@ -5,7 +5,9 @@ const scopusIds = ["57196098200", "7401913619", "57426146300", "23501819100"]; /
 let allPublications = [];
 let loadedCount = 0;
 const loadStep = 20; // Number of publications to load initially & on scroll
+let filteredPublications = []; // Array to store filtered publications
 
+// Function to fetch Scopus publications
 async function fetchScopusPublications(authorId) {
     const url = `https://api.elsevier.com/content/search/scopus?query=AU-ID(${authorId})&apiKey=${API_KEY}&httpAccept=application/json&count=100`;
 
@@ -21,7 +23,8 @@ async function fetchScopusPublications(authorId) {
             year: entry["prism:coverDate"]?.split("-")[0] || "N/A",
             journal: entry["prism:publicationName"] || "N/A",
             doi: entry["prism:doi"] || "#",
-            eid: entry["eid"]
+            eid: entry["eid"],
+            keywords: entry["authkeywords"] || [] // Extract keywords if available
         }));
     } catch (error) {
         console.warn(`Scopus fetch failed for Author ID: ${authorId}`, error);
@@ -29,6 +32,7 @@ async function fetchScopusPublications(authorId) {
     }
 }
 
+// Function to fetch authors of a publication
 async function fetchAuthors(eid) {
     const url = `https://api.elsevier.com/content/abstract/eid/${eid}?apiKey=${API_KEY}&httpAccept=application/json`;
 
@@ -49,6 +53,7 @@ async function fetchAuthors(eid) {
     }
 }
 
+// Function to fetch publications based on Scopus IDs
 async function fetchPublications(scopusIds) {
     document.getElementById("publications").innerHTML = "<p>Loading publications...</p>";
     const publicationsMap = new Map();
@@ -75,9 +80,11 @@ async function fetchPublications(scopusIds) {
         .filter(pub => pub.year !== "N/A")  // Ensure we exclude "N/A" years from sorting
         .sort((a, b) => parseInt(b.year) - parseInt(a.year)); // Sort from newest to oldest
 
+    filteredPublications = [...allPublications]; // Initially show all publications
+
     document.getElementById("publications").innerHTML = ""; 
 
-    if (allPublications.length === 0) {
+    if (filteredPublications.length === 0) {
         document.getElementById("publications").innerHTML = "<p>No publications found.</p>";
         return;
     }
@@ -85,11 +92,29 @@ async function fetchPublications(scopusIds) {
     loadMorePublications(); 
 }
 
+// Function to filter publications based on selected keyword
+function filterPublicationsByKeyword() {
+    const selectedKeyword = document.getElementById("keywordsFilter").value;
+
+    if (selectedKeyword) {
+        filteredPublications = allPublications.filter(pub => 
+            pub.keywords && pub.keywords.some(keyword => keyword.toLowerCase().includes(selectedKeyword.toLowerCase()))
+        );
+    } else {
+        filteredPublications = [...allPublications]; // Show all if no keyword selected
+    }
+
+    loadedCount = 0; // Reset to start from the first publication
+    document.getElementById("publications").innerHTML = "";
+    loadMorePublications(); 
+}
+
+// Function to load more publications
 function loadMorePublications() {
     const publicationsContainer = document.getElementById("publications");
 
-    for (let i = loadedCount; i < loadedCount + loadStep && i < allPublications.length; i++) {
-        const pub = allPublications[i];
+    for (let i = loadedCount; i < loadedCount + loadStep && i < filteredPublications.length; i++) {
+        const pub = filteredPublications[i];
 
         const authorList = Array.from(new Set(pub.authors.map(a => a.name))); 
         const formattedAuthors = authorList
@@ -117,6 +142,7 @@ function loadMorePublications() {
     loadedCount += loadStep;
 }
 
+// Handle scrolling to load more publications
 function handleScroll() {
     const scrollPosition = window.innerHeight + window.scrollY;
     const documentHeight = document.body.offsetHeight;
@@ -128,6 +154,7 @@ function handleScroll() {
 
 window.addEventListener("scroll", handleScroll);
 
+// Fetch publications for the authors (provide the appropriate scopusIds)
 fetchPublications(scopusIds);
 
 
