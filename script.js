@@ -5,9 +5,9 @@ const scopusIds = ["57196098200", "7401913619", "57426146300", "23501819100"]; /
 let allPublications = [];
 let loadedCount = 0;
 const loadStep = 20; // Number of publications to load initially & on scroll
-let filteredPublications = []; // Array to store filtered publications
+let filteredPublications = []; // Stores the filtered publications
 
-// Function to fetch Scopus publications
+// Function to fetch publications from Scopus API
 async function fetchScopusPublications(authorId) {
     const url = `https://api.elsevier.com/content/search/scopus?query=AU-ID(${authorId})&apiKey=${API_KEY}&httpAccept=application/json&count=100`;
 
@@ -24,7 +24,7 @@ async function fetchScopusPublications(authorId) {
             journal: entry["prism:publicationName"] || "N/A",
             doi: entry["prism:doi"] || "#",
             eid: entry["eid"],
-            keywords: entry["authkeywords"] || [] // Extract keywords if available
+            keywords: entry["authkeywords"] || [] // Assume keywords are available
         }));
     } catch (error) {
         console.warn(`Scopus fetch failed for Author ID: ${authorId}`, error);
@@ -32,7 +32,7 @@ async function fetchScopusPublications(authorId) {
     }
 }
 
-// Function to fetch authors of a publication
+// Function to fetch authors associated with the publication
 async function fetchAuthors(eid) {
     const url = `https://api.elsevier.com/content/abstract/eid/${eid}?apiKey=${API_KEY}&httpAccept=application/json`;
 
@@ -53,7 +53,7 @@ async function fetchAuthors(eid) {
     }
 }
 
-// Function to fetch publications based on Scopus IDs
+// Function to fetch all publications and store them
 async function fetchPublications(scopusIds) {
     document.getElementById("publications").innerHTML = "<p>Loading publications...</p>";
     const publicationsMap = new Map();
@@ -80,36 +80,18 @@ async function fetchPublications(scopusIds) {
         .filter(pub => pub.year !== "N/A")  // Ensure we exclude "N/A" years from sorting
         .sort((a, b) => parseInt(b.year) - parseInt(a.year)); // Sort from newest to oldest
 
-    filteredPublications = [...allPublications]; // Initially show all publications
-
     document.getElementById("publications").innerHTML = ""; 
 
-    if (filteredPublications.length === 0) {
+    if (allPublications.length === 0) {
         document.getElementById("publications").innerHTML = "<p>No publications found.</p>";
         return;
     }
 
-    loadMorePublications(); 
+    filteredPublications = allPublications; // Initialize filtered list
+    loadMorePublications();
 }
 
-// Function to filter publications based on selected keyword
-function filterPublicationsByKeyword() {
-    const selectedKeyword = document.getElementById("keywordsFilter").value;
-
-    if (selectedKeyword) {
-        filteredPublications = allPublications.filter(pub => 
-            pub.keywords && pub.keywords.some(keyword => keyword.toLowerCase().includes(selectedKeyword.toLowerCase()))
-        );
-    } else {
-        filteredPublications = [...allPublications]; // Show all if no keyword selected
-    }
-
-    loadedCount = 0; // Reset to start from the first publication
-    document.getElementById("publications").innerHTML = "";
-    loadMorePublications(); 
-}
-
-// Function to load more publications
+// Function to load more publications, based on filtered results
 function loadMorePublications() {
     const publicationsContainer = document.getElementById("publications");
 
@@ -142,19 +124,24 @@ function loadMorePublications() {
     loadedCount += loadStep;
 }
 
-// Handle scrolling to load more publications
-function handleScroll() {
-    const scrollPosition = window.innerHeight + window.scrollY;
-    const documentHeight = document.body.offsetHeight;
-
-    if (scrollPosition >= documentHeight - 100) { 
-        loadMorePublications();
+// Function to handle keyword filter selection
+document.getElementById("keywordFilter").addEventListener("change", (event) => {
+    const selectedKeyword = event.target.value.toLowerCase();
+    
+    if (selectedKeyword) {
+        filteredPublications = allPublications.filter(pub => 
+            pub.keywords.some(keyword => keyword.toLowerCase().includes(selectedKeyword)) ||
+            pub.title.toLowerCase().includes(selectedKeyword)
+        );
+    } else {
+        filteredPublications = allPublications; // No filter, show all publications
     }
-}
 
-window.addEventListener("scroll", handleScroll);
+    loadedCount = 0; // Reset loaded count for filtered results
+    document.getElementById("publications").innerHTML = ""; // Clear the publications container
+    loadMorePublications(); // Reload filtered publications
+});
 
-// Fetch publications for the authors (provide the appropriate scopusIds)
+// Call fetchPublications initially with the scopusIds array
 fetchPublications(scopusIds);
-
 
