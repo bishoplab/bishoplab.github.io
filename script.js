@@ -1,7 +1,7 @@
 const API_KEY = "7a5c846dc5771fe34d62b02ab2f31c4d"; // Replace with your Elsevier API Key
 
 // List of Scopus Author IDs to pull from
-const scopusIds = ["57196098200", "7401913619"]; // Replace with actual Scopus Author IDs
+const scopusIds = ["57196098200", "7401913619", "57426146300", "23501819100"]; // Replace with actual Scopus Author IDs
 
 let allPublications = [];
 let loadedCount = 0;
