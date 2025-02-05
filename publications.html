@@ -175,43 +175,51 @@
     <div id="publication-feed"></div>
     
       <script>
-       async function fetchPublications() {
-            const orcidId = "0000-0002-6956-9188";  // Replace with your ORCID ID
+        async function fetchPublications() {
+            const orcidId = "0000-0002-6956-9188"; // Replace with your ORCID ID
             const url = `https://pub.orcid.org/v3.0/${orcidId}/works`;
-            
+
             try {
                 const response = await fetch(url, {
                     method: 'GET',
                     headers: {
-                        'Accept': 'application/json'
+                        'Accept': 'application/json'  // Force JSON response
                     }
                 });
 
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+
                 const data = await response.json();
-                const publications = data.group;
+                console.log(data); // Debugging: Check output in browser console
 
                 const publicationsContainer = document.getElementById('publications');
                 publicationsContainer.innerHTML = '';
 
-                publications.forEach(publication => {
-                    const publicationDiv = document.createElement('div');
-                    publicationDiv.classList.add('publication');
-                    
-                    const title = publication.workSummary[0].title.title;
-                    const year = publication.workSummary[0].publicationYear.year;
-                    const journal = publication.workSummary[0].journalTitle;
+                if (data.group) {
+                    data.group.forEach(publication => {
+                        const publicationDiv = document.createElement('div');
+                        publicationDiv.classList.add('publication');
 
-                    publicationDiv.innerHTML = `
-                        <h2>${title}</h2>
-                        <p><strong>Year:</strong> ${year}</p>
-                        <p><strong>Journal:</strong> ${journal}</p>
-                    `;
-                    
-                    publicationsContainer.appendChild(publicationDiv);
-                });
+                        const title = publication['work-summary'][0]?.title?.title || "No title";
+                        const year = publication['work-summary'][0]?.publicationDate?.year || "Unknown year";
+                        const journal = publication['work-summary'][0]?.journalTitle || "Unknown journal";
+
+                        publicationDiv.innerHTML = `
+                            <h3>${title}</h3>
+                            <p><strong>Year:</strong> ${year}</p>
+                            <p><strong>Journal:</strong> ${journal}</p>
+                        `;
+
+                        publicationsContainer.appendChild(publicationDiv);
+                    });
+                } else {
+                    publicationsContainer.innerHTML = "<p>No publications found.</p>";
+                }
             } catch (error) {
                 console.error('Error fetching data from ORCID API', error);
-                document.getElementById('publications').innerHTML = '<p>Failed to load publications.</p>';
+                document.getElementById('publications').innerHTML = "<p>Failed to load publications.</p>";
             }
         }
 
