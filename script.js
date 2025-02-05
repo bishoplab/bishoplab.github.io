@@ -1,5 +1,24 @@
+async function fetchEuropePMCAuthors(doi) {
+    if (!doi || doi === "#") return [];
+
+    const apiUrl = `https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=DOI:${encodeURIComponent(doi)}&format=json`;
+
+    try {
+        const response = await fetch(apiUrl);
+        if (!response.ok) throw new Error(`Europe PMC error: ${response.status}`);
+
+        const data = await response.json();
+        const authorList = data?.resultList?.result?.[0]?.authorString || "";
+        
+        return authorList ? authorList.split(", ") : [];
+    } catch (error) {
+        console.error(`Failed to fetch authors from Europe PMC for DOI: ${doi}`, error);
+        return [];
+    }
+}
+
 async function fetchCrossRefAuthors(doi) {
-    if (!doi || doi === "#") return []; // Return empty array if no valid DOI
+    if (!doi || doi === "#") return [];
 
     const apiUrl = `https://api.crossref.org/works/${encodeURIComponent(doi)}`;
 
@@ -12,13 +31,13 @@ async function fetchCrossRefAuthors(doi) {
 
         return authorList.map(author => author.given + " " + author.family).filter(name => name.trim() !== "");
     } catch (error) {
-        console.error(`Failed to fetch authors for DOI: ${doi}`, error);
+        console.error(`Failed to fetch authors from CrossRef for DOI: ${doi}`, error);
         return [];
     }
 }
 
 async function fetchPublications(orcidIds) {
-    const publicationsMap = new Map(); // Deduplication storage
+    const publicationsMap = new Map();
 
     for (const orcidId of orcidIds) {
         const url = `https://pub.orcid.org/v3.0/${orcidId}/works`;
@@ -50,10 +69,11 @@ async function fetchPublications(orcidIds) {
                     }
                 }
 
-                // Fetch authors using CrossRef if DOI is available
+                // Fetch authors using multiple sources
                 let authors = await fetchCrossRefAuthors(doi);
+                if (authors.length === 0) authors = await fetchEuropePMCAuthors(doi);
 
-                // Fallback to ORCID author data if CrossRef returns nothing
+                // Fallback to ORCID data
                 if (authors.length === 0) {
                     const contributors = workSummary?.contributors?.contributor || [];
                     authors = contributors.map(contributor => {
@@ -73,7 +93,6 @@ async function fetchPublications(orcidIds) {
                 const key = `${title}_${year}`;
 
                 if (publicationsMap.has(key)) {
-                    // Merge authors if duplicate
                     let existingData = publicationsMap.get(key);
                     existingData.authors = Array.from(new Set([...existingData.authors.split(", "), ...highlightedAuthors])).join(", ");
                     publicationsMap.set(key, existingData);
@@ -89,7 +108,7 @@ async function fetchPublications(orcidIds) {
 
     // Display publications
     const publicationsContainer = document.getElementById('publications');
-    publicationsContainer.innerHTML = ''; // Clear previous content
+    publicationsContainer.innerHTML = '';
 
     publicationsMap.forEach(pub => {
         const publicationDiv = document.createElement('div');
@@ -113,3 +132,4 @@ const orcidList = ["0000-0002-6956-9188", "0000-0002-6011-7126"]; // Replace wit
 
 // Load publications on page load
 fetchPublications(orcidList);
+
