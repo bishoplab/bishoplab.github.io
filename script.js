@@ -8,11 +8,11 @@ let filteredPublications = []; // Stores the filtered publications
 
 // Function to fetch publications from Scopus API
 async function fetchScopusPublications(authorId) {
-    const url = https://api.elsevier.com/content/search/scopus?query=AU-ID(${authorId})&apiKey=${API_KEY}&httpAccept=application/json&count=100;
+    const url = `https://api.elsevier.com/content/search/scopus?query=AU-ID(${authorId})&apiKey=${API_KEY}&httpAccept=application/json&count=100`;
 
     try {
         const response = await fetch(url, { method: "GET" });
-        if (!response.ok) throw new Error(Scopus API error: ${response.status});
+        if (!response.ok) throw new Error(`Scopus API error: ${response.status}`);
 
         const data = await response.json();
         const entries = data?.["search-results"]?.entry || [];
@@ -26,28 +26,28 @@ async function fetchScopusPublications(authorId) {
             keywords: entry["authkeywords"] || [] // Assume keywords are available
         }));
     } catch (error) {
-        console.warn(Scopus fetch failed for Author ID: ${authorId}, error);
+        console.warn(`Scopus fetch failed for Author ID: ${authorId}`, error);
         return [];
     }
 }
 
 // Function to fetch authors associated with the publication
 async function fetchAuthors(eid) {
-    const url = https://api.elsevier.com/content/abstract/eid/${eid}?apiKey=${API_KEY}&httpAccept=application/json;
+    const url = `https://api.elsevier.com/content/abstract/eid/${eid}?apiKey=${API_KEY}&httpAccept=application/json`;
 
     try {
         const response = await fetch(url, { method: "GET" });
-        if (!response.ok) throw new Error(Scopus API error: ${response.status});
+        if (!response.ok) throw new Error(`Scopus API error: ${response.status}`);
 
         const data = await response.json();
         const authors = data?.["abstracts-retrieval-response"]?.["authors"]?.["author"] || [];
 
         return authors.map(author => ({
-            name: ${author["ce:given-name"]} ${author["ce:surname"]},
+            name: `${author["ce:given-name"]} ${author["ce:surname"]}`,
             scopusId: author["@auid"]
         }));
     } catch (error) {
-        console.warn(Author fetch failed for EID: ${eid}, error);
+        console.warn(`Author fetch failed for EID: ${eid}`, error);
         return [];
     }
 }
@@ -61,7 +61,7 @@ async function fetchPublications(scopusIds) {
         const publications = await fetchScopusPublications(authorId);
 
         for (const pub of publications) {
-            const key = ${pub.title}_${pub.year};
+            const key = `${pub.title}_${pub.year}`;
 
             if (!publicationsMap.has(key)) {
                 pub.authors = await fetchAuthors(pub.eid);
@@ -101,21 +101,21 @@ function loadMorePublications() {
         const formattedAuthors = authorList
             .map(name => {
                 const authorObj = pub.authors.find(a => a.name === name);
-                return scopusIds.includes(authorObj?.scopusId) ? <strong>${name}</strong> : name;
+                return scopusIds.includes(authorObj?.scopusId) ? `<strong>${name}</strong>` : name;
             })
             .join(", ");
 
         const publicationDiv = document.createElement("div");
         publicationDiv.classList.add("publication");
 
-        publicationDiv.innerHTML = 
+        publicationDiv.innerHTML = `
             <h3 style="font-size: 14px; margin: 0 0 5px;">
                 <a href="https://doi.org/${pub.doi}" target="_blank" style="text-decoration: none; color: #0077cc;">${pub.title}</a>
             </h3>
             <p style="font-size: 12px; margin: 2px 0;"><strong>Year:</strong> ${pub.year}</p>
             <p style="font-size: 12px; margin: 2px 0;"><strong>Journal:</strong> ${pub.journal}</p>
             <p style="font-size: 12px; margin: 2px 0;"><strong>Authors:</strong> ${formattedAuthors}</p>
-        ;
+        `;
 
         publicationsContainer.appendChild(publicationDiv);
     }
