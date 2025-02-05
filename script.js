@@ -4,7 +4,7 @@ async function fetchEuropePMCAuthors(doi) {
     const apiUrl = `https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=DOI:${encodeURIComponent(doi)}&format=json`;
 
     try {
-        const response = await fetch(apiUrl);
+        const response = await fetch(apiUrl, { method: 'GET' });
         if (!response.ok) throw new Error(`Europe PMC error: ${response.status}`);
 
         const data = await response.json();
@@ -12,7 +12,7 @@ async function fetchEuropePMCAuthors(doi) {
         
         return authorList ? authorList.split(", ") : [];
     } catch (error) {
-        console.error(`Failed to fetch authors from Europe PMC for DOI: ${doi}`, error);
+        console.warn(`Europe PMC failed for DOI: ${doi}`, error);
         return [];
     }
 }
@@ -23,92 +23,101 @@ async function fetchCrossRefAuthors(doi) {
     const apiUrl = `https://api.crossref.org/works/${encodeURIComponent(doi)}`;
 
     try {
-        const response = await fetch(apiUrl);
+        const response = await fetch(apiUrl, { method: 'GET' });
         if (!response.ok) throw new Error(`CrossRef error: ${response.status}`);
 
         const data = await response.json();
         const authorList = data?.message?.author || [];
 
-        return authorList.map(author => author.given + " " + author.family).filter(name => name.trim() !== "");
+        return authorList.map(author => `${author.given} ${author.family}`).filter(name => name.trim() !== "");
     } catch (error) {
-        console.error(`Failed to fetch authors from CrossRef for DOI: ${doi}`, error);
+        console.warn(`CrossRef failed for DOI: ${doi}`, error);
+        return [];
+    }
+}
+
+async function fetchOrcidPublications(orcidId) {
+    const url = `https://pub.orcid.org/v3.0/${orcidId}/works`;
+
+    try {
+        const response = await fetch(url, { 
+            method: 'GET', 
+            headers: { 'Accept': 'application/json' } 
+        });
+        if (!response.ok) throw new Error(`ORCID API error: ${response.status}`);
+
+        const data = await response.json();
+        return data.group || [];
+    } catch (error) {
+        console.warn(`ORCID fetch failed for ID: ${orcidId}`, error);
         return [];
     }
 }
 
 async function fetchPublications(orcidIds) {
+    document.getElementById('publications').innerHTML = "<p>Loading publications...</p>";
+
     const publicationsMap = new Map();
 
     for (const orcidId of orcidIds) {
-        const url = `https://pub.orcid.org/v3.0/${orcidId}/works`;
+        const publications = await fetchOrcidPublications(orcidId);
 
-        try {
-            const response = await fetch(url, {
-                method: 'GET',
-                headers: { 'Accept': 'application/json' }
-            });
+        for (const publication of publications) {
+            const workSummary = publication['work-summary'][0];
+            const title = workSummary?.title?.title?.value || "Untitled";
+            const year = workSummary?.['publication-date']?.year?.value || "N/A";
+            const journal = workSummary?.['journal-title']?.value || "N/A";
 
-            if (!response.ok) throw new Error(`ORCID API error: ${response.status}`);
-
-            const data = await response.json();
-            const publications = data.group;
-
-            for (const publication of publications) {
-                const workSummary = publication['work-summary'][0];
-                const title = workSummary?.title?.title?.value || "Untitled";
-                const year = workSummary?.['publication-date']?.year?.value || "N/A";
-                const journal = workSummary?.['journal-title']?.value || "N/A";
-
-                // Extract DOI or first available external link
-                let doi = "#";
-                const externalIds = workSummary?.['external-ids']?.['external-id'] || [];
-                for (const id of externalIds) {
-                    if (id?.['external-id-type'] === "doi") {
-                        doi = id?.['external-id-value'] || "#";
-                        break;
-                    }
-                }
-
-                // Fetch authors using multiple sources
-                let authors = await fetchCrossRefAuthors(doi);
-                if (authors.length === 0) authors = await fetchEuropePMCAuthors(doi);
-
-                // Fallback to ORCID data
-                if (authors.length === 0) {
-                    const contributors = workSummary?.contributors?.contributor || [];
-                    authors = contributors.map(contributor => {
-                        let authorName = contributor?.['credit-name']?.value || `ORCID: ${contributor?.['contributor-orcid']?.path || "Unknown"}`;
-                        return authorName;
-                    });
-                }
-
-                if (authors.length === 0) authors = ["Unknown"];
-
-                // Highlight authors matching the ORCID list
-                const highlightedAuthors = authors.map(name =>
-                    orcidIds.some(id => name.includes(id)) ? `<strong>${name}</strong>` : name
-                );
-
-                // Generate unique key for deduplication
-                const key = `${title}_${year}`;
-
-                if (publicationsMap.has(key)) {
-                    let existingData = publicationsMap.get(key);
-                    existingData.authors = Array.from(new Set([...existingData.authors.split(", "), ...highlightedAuthors])).join(", ");
-                    publicationsMap.set(key, existingData);
-                } else {
-                    publicationsMap.set(key, { title, year, journal, doi, authors: highlightedAuthors.join(", ") });
+            // Extract DOI
+            let doi = "#";
+            const externalIds = workSummary?.['external-ids']?.['external-id'] || [];
+            for (const id of externalIds) {
+                if (id?.['external-id-type'] === "doi") {
+                    doi = id?.['external-id-value'] || "#";
+                    break;
                 }
             }
-        } catch (error) {
-            console.error('Error fetching data from ORCID API', error);
-            document.getElementById('publications').innerHTML = '<p>Failed to load publications.</p>';
+
+            // Fetch authors (parallel requests)
+            let authors = await Promise.any([
+                fetchCrossRefAuthors(doi),
+                fetchEuropePMCAuthors(doi)
+            ]).catch(() => []);
+
+            if (authors.length === 0) {
+                const contributors = workSummary?.contributors?.contributor || [];
+                authors = contributors.map(contributor => {
+                    return contributor?.['credit-name']?.value || `ORCID: ${contributor?.['contributor-orcid']?.path || "Unknown"}`;
+                });
+            }
+
+            if (authors.length === 0) authors = ["Unknown"];
+
+            // Highlight authors from ORCID list
+            const highlightedAuthors = authors.map(name =>
+                orcidIds.some(id => name.includes(id)) ? `<strong>${name}</strong>` : name
+            );
+
+            // Deduplicate entries
+            const key = `${title}_${year}`;
+            if (publicationsMap.has(key)) {
+                let existing = publicationsMap.get(key);
+                existing.authors = Array.from(new Set([...existing.authors.split(", "), ...highlightedAuthors])).join(", ");
+                publicationsMap.set(key, existing);
+            } else {
+                publicationsMap.set(key, { title, year, journal, doi, authors: highlightedAuthors.join(", ") });
+            }
         }
     }
 
     // Display publications
     const publicationsContainer = document.getElementById('publications');
     publicationsContainer.innerHTML = '';
+
+    if (publicationsMap.size === 0) {
+        publicationsContainer.innerHTML = "<p>No publications found.</p>";
+        return;
+    }
 
     publicationsMap.forEach(pub => {
         const publicationDiv = document.createElement('div');
