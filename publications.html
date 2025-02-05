@@ -12,15 +12,6 @@
   
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 
-
-  <select id="keywordsFilter" onchange="filterPublicationsByKeyword()">
-    <option value="">Select a Keyword</option>
-    <option value="Machine Learning">Machine Learning</option>
-    <option value="Data Science">Data Science</option>
-    <option value="Artificial Intelligence">Artificial Intelligence</option>
-    <!-- Add more keyword options here -->
-  </select>
-
   <style>
     body {
       font-family: 'Jost', sans-serif;
@@ -183,15 +174,16 @@
   <div class="content">
     <h2>Publications Feed</h2>
     
-    <!-- Dropdown filter placed next to the title -->
-    <div id="filterContainer" style="display: inline-block; margin-left: 20px;">
+  <div id="filterContainer" style="display: inline-block; margin-left: 20px;">
       <label for="keywordFilter" style="font-size: 14px; margin-right: 10px;">Filter by Keywords:</label>
       <select id="keywordFilter" style="padding: 5px; font-size: 14px;">
         <option value="">--Select a Keyword--</option>
-        <option value="Keyword1">Keyword1</option>
-        <option value="Keyword2">Keyword2</option>
-        <option value="Keyword3">Keyword3</option>
-        <!-- Add more options here as needed -->
+        <option value="Mitochondrion">Mitochondrion</option>
+        <option value="Skeletal Muscle">Skeletal Muscle</option>
+        <option value="Circadian Rhythm">Circadian Rhythm</option>
+        <option value="Resistance Training">Resistance Training</option>
+        <option value="Endurance">Endurance</option>
+        <option value="Carbohydrate">Carbohydrate</option>
       </select>
     </div>
       
