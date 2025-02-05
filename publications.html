@@ -152,36 +152,33 @@
     <h2>Publications Feed</h2>
     <div id="publication-feed"></div>
 
-    <script>
-        // Example ORCID ID for fetching publications
-        const orcidId = '0000-0002-6956-9188'; // Replace with actual ORCID ID
+        <script>
+      // Replace 'YOUR_ORCID_ID' with the actual ORCID ID
+      const orcidId = 0000-0002-6956-9188; // Replace with the correct ORCID ID
 
-        fetch(`https://pub.orcid.org/v3.0/${orcidId}/works`, {
-            headers: {
-                'Accept': 'application/json'
-            }
+      // Fetch publications from ORCID
+      axios.get(`https://pub.orcid.org/v3.0/${orcidId}/works`)
+        .then(response => {
+          const publications = response.data.group;
+          const publicationsList = document.getElementById('publications-list');
+          publicationsList.innerHTML = ''; // Clear the loading text
+          
+          // Loop through the publications and add them to the page
+          publications.forEach(pub => {
+            const pubItem = document.createElement('div');
+            pubItem.innerHTML = `
+              <p><strong>${pub['work-title']['title']['value']}</strong></p>
+              <p>${pub['publication-date']['year']['value']}</p>
+              <p>${pub['journal-title'] ? pub['journal-title']['value'] : 'No Journal Title'}</p>
+            `;
+            publicationsList.appendChild(pubItem);
+          });
         })
-        .then(response => response.json())
-        .then(data => {
-            const feedContainer = document.getElementById("publication-feed");
-
-            data.group.forEach(pub => {
-                const pubElement = document.createElement("div");
-                pubElement.classList.add("publication");
-
-                const title = pub['work-summary'][0].title.value;
-                const doi = pub['work-summary'][0].external-ids ? pub['work-summary'][0].external-ids['external-id'][0]['external-id-value'] : 'No DOI';
-                const link = `https://doi.org/${doi}`;
-
-                pubElement.innerHTML = `
-                    <h3><a href="${link}" target="_blank">${title}</a></h3>
-                    <p><strong>DOI:</strong> <a href="${link}" target="_blank">${doi}</a></p>
-                `;
-
-                feedContainer.appendChild(pubElement);
-            });
-        })
-        .catch(error => console.log('Error fetching publications:', error));
+        .catch(error => {
+          const publicationsList = document.getElementById('publications-list');
+          publicationsList.innerHTML = 'Error fetching publications. Please check the ORCID ID and try again.';
+          console.error('Error fetching data:', error);
+        });
     </script>
       
     </div>
