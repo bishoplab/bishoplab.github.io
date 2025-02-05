@@ -3,7 +3,7 @@ const scopusIds = ['57196098200', '7401913619', '57426146300', '23501819100']; /
 
 let allPublications = [];
 let loadedCount = 0;
-const loadStep = 20; // Number of publications to load initially & on scroll
+const loadStep = 30; // Number of publications to load initially & on scroll
 let filteredPublications = []; // Stores the filtered publications
 
 // Function to fetch publications from Scopus API
