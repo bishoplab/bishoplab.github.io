@@ -12,6 +12,15 @@
   
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 
+
+  <select id="keywordsFilter" onchange="filterPublicationsByKeyword()">
+    <option value="">Select a Keyword</option>
+    <option value="Machine Learning">Machine Learning</option>
+    <option value="Data Science">Data Science</option>
+    <option value="Artificial Intelligence">Artificial Intelligence</option>
+    <!-- Add more keyword options here -->
+  </select>
+
   <style>
     body {
       font-family: 'Jost', sans-serif;
