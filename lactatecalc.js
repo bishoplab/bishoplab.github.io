@@ -22,14 +22,14 @@ function addRow() {
   let cell1 = newRow.insertCell(0);
   let cell2 = newRow.insertCell(1);
   
-  cell1.innerHTML = '<input type="number" step="any" oninput="updateGraph()">';
-  cell2.innerHTML = '<input type="number" step="any" oninput="updateGraph()">';
+  cell1.innerHTML = '<input type="number" step="any" oninput="updateGraph()">'; 
+  cell2.innerHTML = '<input type="number" step="any" oninput="updateGraph()">'; 
 }
 
 function initializeGraph() {
   let ctx = document.getElementById('lactateChart').getContext('2d');
 
- chart = new Chart(ctx, {
+  chart = new Chart(ctx, {
     type: 'scatter',
     data: {
       datasets: [{
@@ -44,8 +44,9 @@ function initializeGraph() {
         backgroundColor: 'transparent',
         fill: false,
         showLine: true,
-        tension: 0, // No bezier curves, just straight lines
+        tension: 0.4, // Smooth the line (non-zero value for smooth curve)
         borderWidth: 2,
+        pointRadius: 0, // No points on the curve
         data: [] // Polynomial curve data, initially empty
       }]
     },
@@ -101,8 +102,8 @@ function updateGraph() {
 
   // Update chart with data points and polynomial curve
   chart.data.datasets[0].data = dataPoints; // Black dots
-  chart.data.datasets[1].data = polynomialCurve; // Red polynomial line
-  
+  chart.data.datasets[1].data = polynomialCurve; // Red polynomial line (smooth)
+
   // Update the title with the R² value
   chart.options.plugins.title.text = `Lactate Threshold Curve (R²: ${rSquared.toFixed(4)})`;
 
