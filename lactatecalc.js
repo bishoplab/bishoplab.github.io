@@ -33,16 +33,16 @@ function initializeGraph() {
     data: {
       datasets: [
         {
-          label: 'Data Points',
+          label: 'Lactate Data Points',
           borderColor: 'black',
           backgroundColor: 'black',
           fill: false,
           showLine: false,
           pointRadius: 5,
-          data: []
+          data: [] 
         },
         {
-          label: 'Polynomial Fit',
+          label: 'Lactate Threshold Curve',
           borderColor: 'red',
           backgroundColor: 'transparent',
           fill: false,
@@ -50,7 +50,7 @@ function initializeGraph() {
           tension: 0.4,
           borderWidth: 2,
           pointRadius: 0,
-          data: []
+          data: [] 
         }
       ]
     },
@@ -64,14 +64,12 @@ function initializeGraph() {
         title: {
           display: true,
           text: 'Lactate Threshold Curve (R²: )',
-          font: {
-            size: 16
-          }
+          font: { size: 16 }
         }
       },
       scales: {
-        x: { title: { display: true, text: 'Load' }, min: 0 },
-        y: { title: { display: true, text: 'Lactate Concentration' }, min: 0 }
+        x: { title: { display: true, text: 'Exercise Load' }, min: 0 },
+        y: { title: { display: true, text: 'Lactate Concentration (mmol/L)' }, min: 0 }
       }
     }
   });
@@ -82,7 +80,6 @@ function updateGraph() {
 
   let table = document.getElementById("data-table").getElementsByTagName('tbody')[0];
   let rows = table.getElementsByTagName('tr');
-
   let dataPoints = [];
 
   for (let row of rows) {
@@ -109,7 +106,7 @@ function updateGraph() {
   let modifiedDmaxY = evaluatePolynomial(coefficients, modifiedDmax);
 
   chart.data.datasets.push({
-    label: 'Modified Dmax Line',
+    label: 'Modified Dmax Threshold',
     borderColor: 'blue',
     backgroundColor: 'transparent',
     borderDash: [5, 5],
@@ -124,15 +121,15 @@ function updateGraph() {
 function polynomialRegression(points, degree) {
   let xValues = points.map(p => p.x);
   let yValues = points.map(p => p.y);
-  
   let X = [];
+
   for (let i = 0; i < points.length; i++) {
     X[i] = [];
     for (let j = 0; j <= degree; j++) {
       X[i][j] = Math.pow(xValues[i], degree - j);
     }
   }
-  
+
   let Xt = math.transpose(X);
   let XtX = math.multiply(Xt, X);
   let XtY = math.multiply(Xt, yValues);
@@ -161,10 +158,7 @@ function calculateRSquared(points, polynomialCurve) {
 function calculateModifiedDmax(coefficients) {
   let a = coefficients[0];
   let b = coefficients[1];
-  
-  let xModifiedDmax = -b / (3 * a);
-  
-  return xModifiedDmax;
+  return -b / (3 * a);
 }
 
 function evaluatePolynomial(coefficients, x) {
