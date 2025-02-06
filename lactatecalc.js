@@ -156,4 +156,3 @@ function calculateRSquared(points, polynomialCurve) {
   return 1 - (ssResidual / ssTotal);
 }
 
-
