@@ -75,3 +75,4 @@ function updateGraph() {
   chart.data.datasets[0].data = dataPoints;
   chart.update();
 }
+
