@@ -33,12 +33,6 @@ function initializeGraph() {
     type: 'scatter',
     data: {
       datasets: [{
-        label: 'Data Points',
-        borderColor: 'transparent', // No line connecting data points
-        backgroundColor: 'black',
-        pointRadius: 5,
-        data: [] // Start empty, but will be populated with the points
-      }, {
         label: 'Polynomial Fit',
         borderColor: 'red',
         backgroundColor: 'transparent',
@@ -46,7 +40,7 @@ function initializeGraph() {
         showLine: true,
         tension: 0.4, // Smooth the line (non-zero value for smooth curve)
         borderWidth: 2,
-        pointRadius: 0, // No points on the curve
+        pointRadius: 5, // Data points still visible
         data: [] // Polynomial curve data, initially empty
       }]
     },
@@ -100,24 +94,29 @@ function updateGraph() {
   // Calculate R² value
   let rSquared = calculateRSquared(dataPoints, polynomialCurve);
 
-  // Calculate the Modified Dmax point
-  let modifiedDmax = calculateModifiedDmax(coefficients);
-  let modifiedDmaxPoint = { x: modifiedDmax, y: evaluatePolynomial(coefficients, modifiedDmax) };
-
-  // Update chart with data points and polynomial curve
-  chart.data.datasets[0].data = dataPoints; // Black dots
-  chart.data.datasets[1].data = polynomialCurve; // Red polynomial line (smooth)
+  // Update chart with polynomial curve only (no points)
+  chart.data.datasets[0].data = dataPoints; // Data points included
+  chart.data.datasets[0].borderColor = 'red'; // Polynomial fit curve in red
+  chart.data.datasets[0].pointRadius = 5; // Keeping the data points visible
 
   // Update the title with the R² value
   chart.options.plugins.title.text = `Lactate Threshold Curve (R²: ${rSquared.toFixed(4)})`;
 
-  // Add the Modified Dmax point to the graph
+  // Calculate the Modified Dmax point (Load at the Dmax point)
+  let modifiedDmax = calculateModifiedDmax(coefficients);
+
+  // Calculate the y-value for the Modified Dmax Load
+  let modifiedDmaxY = evaluatePolynomial(coefficients, modifiedDmax);
+
+  // Add a dotted line at the Modified Dmax Load
   chart.data.datasets.push({
-    label: 'Modified Dmax Point',
+    label: 'Modified Dmax Line',
     borderColor: 'blue',
-    backgroundColor: 'blue',
-    pointRadius: 7,
-    data: [modifiedDmaxPoint]
+    backgroundColor: 'transparent',
+    borderDash: [5, 5], // Dotted line style
+    fill: false,
+    data: [{ x: modifiedDmax, y: 0 }, { x: modifiedDmax, y: modifiedDmaxY }],
+    pointRadius: 0
   });
 
   chart.update();
@@ -186,4 +185,3 @@ function evaluatePolynomial(coefficients, x) {
   }
   return y;
 }
-
