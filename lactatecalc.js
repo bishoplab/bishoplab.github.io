@@ -9,6 +9,11 @@ function toggleTool() {
   if (isHidden && !chart) {
     initializeGraph();
   }
+
+  // Add a row if the tool is being shown and it's the first time
+  if (isHidden && document.getElementById("data-table").getElementsByTagName('tbody')[0].children.length === 0) {
+    addRow();
+  }
 }
 
 function addRow() {
@@ -75,4 +80,3 @@ function updateGraph() {
   chart.data.datasets[0].data = dataPoints;
   chart.update();
 }
-
