@@ -131,7 +131,7 @@
 
     <button class="tool-button" onclick="toggleTool()">Lactate Threshold Calculator</button>
 
-    <div class="tool-container" id="tool-container">
+    <div class="tool-container" id="tool-container" style="display: none;">
       
       <!-- Table for input -->
       <div class="table-container">
@@ -162,12 +162,14 @@
 
   <script>
     let chart = null;
-
+    
     function toggleTool() {
       let toolContainer = document.getElementById('tool-container');
-      toolContainer.style.display = (toolContainer.style.display === 'none' || toolContainer.style.display === '') ? 'flex' : 'none';
+      let isHidden = (toolContainer.style.display === 'none' || toolContainer.style.display === '');
+      
+      toolContainer.style.display = isHidden ? 'flex' : 'none';
 
-      if (!chart) {
+      if (isHidden && !chart) {
         initializeGraph();
       }
     }
@@ -189,16 +191,15 @@
         type: 'scatter',
         data: {
           datasets: [{
-            label: 'Lactate Threshold Data',
             borderColor: 'black',
             backgroundColor: 'black',
             showLine: true,
             fill: false,
-            tension: 0.3, 
+            tension: 0.3,
             borderWidth: 2,
             pointRadius: 5,
             pointBackgroundColor: 'black',
-            data: []
+            data: [{ x: 0, y: 0 }] // Always start from (0,0)
           }]
         },
         options: {
@@ -221,8 +222,8 @@
       let table = document.getElementById("data-table").getElementsByTagName('tbody')[0];
       let rows = table.getElementsByTagName('tr');
 
-      let xValues = [];
-      let yValues = [];
+      let xValues = [0];
+      let yValues = [0];
 
       for (let row of rows) {
         let inputs = row.getElementsByTagName('input');
@@ -235,7 +236,6 @@
         }
       }
 
-      // Sort values by x-axis
       let combined = xValues.map((x, i) => ({ x, y: yValues[i] }));
       combined.sort((a, b) => a.x - b.x);
       let sortedData = combined.map(pair => ({ x: pair.x, y: pair.y }));
@@ -247,3 +247,4 @@
 
 </body>
 </html>
+
