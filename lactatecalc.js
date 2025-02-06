@@ -97,42 +97,8 @@ function updateGraph() {
   let coefficients = polynomialRegression(dataPoints, 3);
   let polynomialCurve = generatePolynomialCurve(coefficients, dataPoints);
 
-  // Calculate the linear regression (from smallest to largest Load)
-  let linearCoefficients = linearRegression(dataPoints);
-  let linearLine = generateLinearLine(linearCoefficients, dataPoints);
-
-  // Find the point where the greatest distance between the linear and polynomial line occurs
-  let maxDistance = -Infinity;
-  let maxDistanceIndex = -1;
-
-  for (let i = 0; i < dataPoints.length; i++) {
-    let linearY = linearLine[i].y;
-    let polyY = polynomialCurve[i].y;
-    let distance = Math.abs(linearY - polyY);
-    
-    if (distance > maxDistance) {
-      maxDistance = distance;
-      maxDistanceIndex = i;
-    }
-  }
-
-  // Output the table of Load, Linear Y, Polynomial Y, and Distance
-  let tableHtml = '';
-  for (let i = 0; i < dataPoints.length; i++) {
-    let load = dataPoints[i].x;
-    let linearY = linearLine[i].y;
-    let polyY = polynomialCurve[i].y;
-    let distance = Math.abs(linearY - polyY);
-
-    tableHtml += `<tr>
-                    <td>${load}</td>
-                    <td>${linearY.toFixed(4)}</td>
-                    <td>${polyY.toFixed(4)}</td>
-                    <td>${distance.toFixed(4)}</td>
-                  </tr>`;
-  }
-
-  document.getElementById('distance-table').innerHTML = tableHtml;
+  // Calculate R² value
+  let rSquared = calculateRSquared(dataPoints, polynomialCurve);
 
   // Update chart with data points and polynomial curve
   chart.data.datasets[0].data = dataPoints; // Black dots
@@ -178,31 +144,6 @@ function generatePolynomialCurve(coefficients, points) {
   });
 }
 
-// Linear Regression (Simple line from smallest to largest Load)
-function linearRegression(points) {
-  let xValues = points.map(p => p.x);
-  let yValues = points.map(p => p.y);
-
-  let n = points.length;
-  let sumX = xValues.reduce((sum, x) => sum + x, 0);
-  let sumY = yValues.reduce((sum, y) => sum + y, 0);
-  let sumXY = xValues.reduce((sum, x, i) => sum + (x * yValues[i]), 0);
-  let sumX2 = xValues.reduce((sum, x) => sum + (x * x), 0);
-
-  let slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
-  let intercept = (sumY - slope * sumX) / n;
-
-  return [slope, intercept];
-}
-
-// Generate y-values for the linear line based on the linear coefficients
-function generateLinearLine(coefficients, points) {
-  return points.map(point => {
-    let y = coefficients[0] * point.x + coefficients[1];
-    return { x: point.x, y: y };
-  });
-}
-
 // Calculate R² value for the regression
 function calculateRSquared(points, polynomialCurve) {
   let meanY = points.reduce((sum, p) => sum + p.y, 0) / points.length;
@@ -210,4 +151,3 @@ function calculateRSquared(points, polynomialCurve) {
   let ssResidual = points.reduce((sum, p, i) => sum + Math.pow(p.y - polynomialCurve[i].y, 2), 0);
   return 1 - (ssResidual / ssTotal);
 }
-
