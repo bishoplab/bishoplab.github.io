@@ -161,14 +161,12 @@ function findLactateThreshold(coefficients, targetY) {
 
 // Calculate the DMAX point (Max perpendicular distance to the straight line formed by first and last data points)
 function calculateDMAX(coefficients, dataPoints) {
-  // Find the straight line between the first and last data points
   let firstPoint = dataPoints[0];
   let lastPoint = dataPoints[dataPoints.length - 1];
 
   let slope = (lastPoint.y - firstPoint.y) / (lastPoint.x - firstPoint.x);
   let intercept = firstPoint.y - slope * firstPoint.x;
 
-  // Compute the perpendicular distances and find the maximum distance
   let maxDistance = 0;
   let dmaxX = 0;
 
@@ -229,12 +227,9 @@ function calculateRSquared(points, polynomialCurve) {
 
 // Calculate the second derivative of the polynomial and find its maximum (Modified Dmax)
 function calculateModifiedDmax(coefficients) {
-  // Second derivative for a cubic function: ax^3 + bx^2 + cx + d
-  // The second derivative is: 6ax + 2b
   let a = coefficients[0];
   let b = coefficients[1];
   
-  // Find the x-value where the second derivative equals zero
   let xModifiedDmax = -b / (3 * a);  // Solve 6ax + 2b = 0
   
   return xModifiedDmax;
@@ -247,4 +242,5 @@ function evaluatePolynomial(coefficients, x) {
     y += coefficients[i] * Math.pow(x, coefficients.length - 1 - i);
   }
   return y;
-} 
+}
+
