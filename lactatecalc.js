@@ -33,24 +33,13 @@ function initializeGraph() {
     type: 'scatter',
     data: {
       datasets: [{
-        borderColor: 'black',
-        backgroundColor: 'black',
-        showLine: true,
-        fill: false,
-        tension: 0.3,
-        borderWidth: 2,
-        pointRadius: 5,
-        pointBackgroundColor: 'black',
-        data: [] // Start empty, but the axes still show 0
-      }, {
-        label: 'Polynomial Fit',
         borderColor: 'red',
         backgroundColor: 'transparent',
-        showLine: true,
+        showLine: true,  // Only show the trend line
         fill: false,
         tension: 0,
         borderWidth: 2,
-        data: [] // To hold the polynomial curve points
+        data: [] // Start empty, but will be populated with the polynomial fit data
       }]
     },
     options: {
@@ -91,11 +80,8 @@ function updateGraph() {
   let coefficients = polynomialRegression(dataPoints, 3);
   let polynomialCurve = generatePolynomialCurve(coefficients, dataPoints);
 
-  // Update scatter plot data
-  chart.data.datasets[0].data = dataPoints;
-
-  // Update polynomial line
-  chart.data.datasets[1].data = polynomialCurve;
+  // Update the polynomial line (red trend line)
+  chart.data.datasets[0].data = polynomialCurve;  // Use only the polynomial curve data
   chart.update();
 }
 
@@ -132,3 +118,4 @@ function generatePolynomialCurve(coefficients, points) {
     return { x: point.x, y: y };
   });
 }
+
