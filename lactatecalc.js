@@ -151,28 +151,10 @@ function updateGraph() {
   chart.update();
 }
 
-// Helper function to generate the polynomial curve only within the bounds of the input data
-function generatePolynomialCurve(coefficients, dataPoints, xMin, xMax) {
-  let step = (xMax - xMin) / 100;  // Define the number of points for the curve
-  let curve = [];
-  for (let i = xMin; i <= xMax; i += step) {
-    let normalizedY = evaluatePolynomial(coefficients, i);
-    let realY = normalizedY * (Math.max(...dataPoints.map(p => p.y)) - Math.min(...dataPoints.map(p => p.y))) + Math.min(...dataPoints.map(p => p.y));
-    curve.push({ x: i, y: realY });
-  }
-  return curve;
-}
-
-// Polynomial evaluation function (for normalized values)
-function evaluatePolynomial(coefficients, x) {
-  return coefficients.reduce((acc, coeff, index) => acc + coeff * Math.pow(x, coefficients.length - index - 1), 0);
-}
-
 // Find the x-value where the polynomial curve equals a specific y-value (e.g., 4 for Lactate Threshold)
 function findLactateThreshold(coefficients, targetY) {
-  // Find the x-value where the polynomial curve equals the target Y value
-  let xLow = Math.min(...dataPoints.map(p => p.x));  // Set the lower bound to the smallest x value
-  let xHigh = Math.max(...dataPoints.map(p => p.x)); // Set the upper bound to the largest x value
+  let xLow = 0;
+  let xHigh = 10;  // Start with a reasonable range
   let tolerance = 0.001;
 
   while (xHigh - xLow > tolerance) {
@@ -180,9 +162,9 @@ function findLactateThreshold(coefficients, targetY) {
     let yMid = evaluatePolynomial(coefficients, xMid);
 
     if (yMid < targetY) {
-      xLow = xMid; // Move the lower bound up
+      xLow = xMid;
     } else {
-      xHigh = xMid; // Move the upper bound down
+      xHigh = xMid;
     }
   }
 
@@ -191,12 +173,14 @@ function findLactateThreshold(coefficients, targetY) {
 
 // Calculate the DMAX point (Max perpendicular distance to the straight line formed by first and last data points)
 function calculateDMAX(coefficients, dataPoints) {
+  // Find the straight line between the first and last data points
   let firstPoint = dataPoints[0];
   let lastPoint = dataPoints[dataPoints.length - 1];
 
   let slope = (lastPoint.y - firstPoint.y) / (lastPoint.x - firstPoint.x);
   let intercept = firstPoint.y - slope * firstPoint.x;
 
+  // Compute the perpendicular distances and find the maximum distance
   let maxDistance = 0;
   let dmaxX = 0;
 
@@ -257,9 +241,12 @@ function calculateRSquared(points, polynomialCurve) {
 
 // Calculate the second derivative of the polynomial and find its maximum (Modified Dmax)
 function calculateModifiedDmax(coefficients) {
+  // Second derivative for a cubic function: ax^3 + bx^2 + cx + d
+  // The second derivative is: 6ax + 2b
   let a = coefficients[0];
   let b = coefficients[1];
   
+  // Find the x-value where the second derivative equals zero
   let xModifiedDmax = -b / (3 * a);  // Solve 6ax + 2b = 0
   
   return xModifiedDmax;
@@ -273,4 +260,3 @@ function evaluatePolynomial(coefficients, x) {
   }
   return y;
 }
-
