@@ -112,21 +112,49 @@ function updateGraph() {
   // Update the title with the R² value
   chart.options.plugins.title.text = `Lactate Threshold Curve (R²: ${rSquared.toFixed(4)})`;
 
-  // Calculate the Modified Dmax point (Load at the Dmax point)
-  let modifiedDmax = calculateModifiedDmax(coefficients);
+  // Calculate the Lactate Concentration at Load = 4
+  let lactateThresholdLoad = findLactateThresholdLoad(coefficients, 4);
 
-  // Calculate the y-value for the Modified Dmax Load
-  let modifiedDmaxY = evaluatePolynomial(coefficients, modifiedDmax);
+  // Calculate the DMAX point
+  let dmaxLoad = calculateDMAX(coefficients);
 
-  // Add a dotted line at the Modified Dmax Load
+  // Calculate the DMAX MOD point
+  let dmaxModLoad = calculateDMAXMOD(coefficients, dataPoints);
+
+  // Plot Lactate Threshold (Load at Lactate Concentration = 4)
   chart.data.datasets.push({
-    label: 'Modified Dmax Line',
-    borderColor: 'blue',
+    label: 'Lactate Threshold',
+    borderColor: 'green',
     backgroundColor: 'transparent',
-    borderDash: [5, 5], // Dotted line style
-    fill: false,
-    data: [{ x: modifiedDmax, y: 0 }, { x: modifiedDmax, y: modifiedDmaxY }],
-    pointRadius: 0
+    borderWidth: 2,
+    pointRadius: 5,
+    data: [{ x: lactateThresholdLoad, y: 4 }],
+    pointBackgroundColor: 'green',
+    pointBorderColor: 'green'
+  });
+
+  // Plot DMAX (Max Perpendicular Distance)
+  chart.data.datasets.push({
+    label: 'DMAX',
+    borderColor: 'orange',
+    backgroundColor: 'transparent',
+    borderWidth: 2,
+    pointRadius: 5,
+    data: [{ x: dmaxLoad, y: 0 }],
+    pointBackgroundColor: 'orange',
+    pointBorderColor: 'orange'
+  });
+
+  // Plot DMAX MOD (Modified DMAX)
+  chart.data.datasets.push({
+    label: 'DMAX MOD',
+    borderColor: 'purple',
+    backgroundColor: 'transparent',
+    borderWidth: 2,
+    pointRadius: 5,
+    data: [{ x: dmaxModLoad, y: 0 }],
+    pointBackgroundColor: 'purple',
+    pointBorderColor: 'purple'
   });
 
   chart.update();
@@ -174,24 +202,49 @@ function calculateRSquared(points, polynomialCurve) {
   return 1 - (ssResidual / ssTotal);
 }
 
-// Calculate the second derivative of the polynomial and find its maximum (Modified Dmax)
-function calculateModifiedDmax(coefficients) {
+// Calculate the DMAX point
+function calculateDMAX(coefficients) {
   // Second derivative for a cubic function: ax^3 + bx^2 + cx + d
   // The second derivative is: 6ax + 2b
   let a = coefficients[0];
   let b = coefficients[1];
   
   // Find the x-value where the second derivative equals zero
-  let xModifiedDmax = -b / (3 * a);  // Solve 6ax + 2b = 0
+  let xDMAX = -b / (3 * a);  // Solve 6ax + 2b = 0
   
-  return xModifiedDmax;
+  return xDMAX;
 }
 
-// Evaluate polynomial at x value
-function evaluatePolynomial(coefficients, x) {
-  let y = 0;
-  for (let i = 0; i < coefficients.length; i++) {
-    y += coefficients[i] * Math.pow(x, coefficients.length - 1 - i);
+// Calculate the Modified DMAX point
+function calculateDMAXMOD(coefficients, dataPoints) {
+  // DMAX MOD method involves finding the point where the lactate concentration first increases by more than 0.4.
+  for (let i = 1; i < dataPoints.length; i++) {
+    if (dataPoints[i].y - dataPoints[i - 1].y > 0.4) {
+      return dataPoints[i].x; // Return the corresponding load value
+    }
   }
-  return y;
+  return null;
 }
+
+// Find Lactate Threshold Load (when concentration is 4)
+function findLactateThresholdLoad(coefficients, threshold) {
+  let load = null;
+  
+  // Solve for x in polynomial equation where y = threshold (Lactate concentration)
+  let a = coefficients[0];
+  let b = coefficients[1];
+  let c = coefficients[2];
+  let d = coefficients[3];
+
+  // Using a numerical method to find the root
+  for (let x = 0; x < 1000; x += 0.1) {
+    let y = a * Math.pow(x, 3) + b * Math.pow(x, 2) + c * x + d;
+    if (Math.abs(y - threshold) < 0.1) {
+      load = x;
+      break;
+    }
+  }
+
+  return load;
+}
+
