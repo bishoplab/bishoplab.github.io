@@ -40,8 +40,8 @@ function initializeGraph() {
       }]
     },
     options: {
-      responsive: true,
-      maintainAspectRatio: false,
+      responsive: false,  // Set to false to disable responsiveness
+      maintainAspectRatio: false,  // Disable aspect ratio maintenance
       plugins: {
         legend: { display: false }
       },
