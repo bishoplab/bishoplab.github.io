@@ -30,9 +30,15 @@ function initializeGraph() {
   let ctx = document.getElementById('lactateChart').getContext('2d');
 
   chart = new Chart(ctx, {
-    type: 'line', // Changed from 'scatter' to 'line' to ensure no dots are plotted
+    type: 'scatter',
     data: {
       datasets: [{
+        label: 'Data Points',
+        borderColor: 'transparent', // No line connecting data points
+        backgroundColor: 'black',
+        pointRadius: 5,
+        data: [] // Start empty, but will be populated with the points
+      }, {
         label: 'Polynomial Fit',
         borderColor: 'red',
         backgroundColor: 'transparent',
@@ -95,9 +101,10 @@ function updateGraph() {
   // Calculate R² value
   let rSquared = calculateRSquared(dataPoints, polynomialCurve);
 
-  // Update chart with polynomial curve only (no dots)
-  chart.data.datasets[0].data = polynomialCurve; // Red polynomial line
-
+  // Update chart with data points and polynomial curve
+  chart.data.datasets[0].data = dataPoints; // Black dots
+  chart.data.datasets[1].data = polynomialCurve; // Red polynomial line (without dots)
+  
   // Update the title with the R² value
   chart.options.plugins.title.text = `Lactate Threshold Curve (R²: ${rSquared.toFixed(4)})`;
 
@@ -155,3 +162,4 @@ function calculateRSquared(points, polynomialCurve) {
   let ssResidual = points.reduce((sum, p, i) => sum + Math.pow(p.y - polynomialCurve[i].y, 2), 0);
   return 1 - (ssResidual / ssTotal);
 }
+
