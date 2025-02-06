@@ -68,6 +68,9 @@ function initializeGraph() {
           font: {
             size: 16
           }
+        },
+        annotation: {
+          annotations: [] // To be populated with text annotations for Lactate Threshold, DMAX, DMAX MOD
         }
       },
       scales: {
@@ -121,41 +124,33 @@ function updateGraph() {
   // Calculate the DMAX MOD point
   let dmaxModLoad = calculateDMAXMOD(coefficients, dataPoints);
 
-  // Plot Lactate Threshold (Load at Lactate Concentration = 4)
-  chart.data.datasets.push({
-    label: 'Lactate Threshold',
-    borderColor: 'green',
-    backgroundColor: 'transparent',
-    borderWidth: 2,
-    pointRadius: 5,
-    data: [{ x: lactateThresholdLoad, y: 4 }],
-    pointBackgroundColor: 'green',
-    pointBorderColor: 'green'
-  });
+  // Clear existing annotations
+  chart.options.plugins.annotation.annotations = [];
 
-  // Plot DMAX (Max Perpendicular Distance)
-  chart.data.datasets.push({
-    label: 'DMAX',
-    borderColor: 'orange',
-    backgroundColor: 'transparent',
-    borderWidth: 2,
-    pointRadius: 5,
-    data: [{ x: dmaxLoad, y: 0 }],
-    pointBackgroundColor: 'orange',
-    pointBorderColor: 'orange'
-  });
-
-  // Plot DMAX MOD (Modified DMAX)
-  chart.data.datasets.push({
-    label: 'DMAX MOD',
-    borderColor: 'purple',
-    backgroundColor: 'transparent',
-    borderWidth: 2,
-    pointRadius: 5,
-    data: [{ x: dmaxModLoad, y: 0 }],
-    pointBackgroundColor: 'purple',
-    pointBorderColor: 'purple'
-  });
+  // Add text annotations to display the values
+  chart.options.plugins.annotation.annotations.push(
+    {
+      type: 'label',
+      xValue: lactateThresholdLoad,
+      yValue: 4,
+      backgroundColor: 'green',
+      content: `Lactate Threshold: ${lactateThresholdLoad.toFixed(2)}`
+    },
+    {
+      type: 'label',
+      xValue: dmaxLoad,
+      yValue: 0,
+      backgroundColor: 'orange',
+      content: `DMAX: ${dmaxLoad.toFixed(2)}`
+    },
+    {
+      type: 'label',
+      xValue: dmaxModLoad,
+      yValue: 0,
+      backgroundColor: 'purple',
+      content: `DMAX MOD: ${dmaxModLoad.toFixed(2)}`
+    }
+  );
 
   chart.update();
 }
@@ -247,4 +242,3 @@ function findLactateThresholdLoad(coefficients, threshold) {
 
   return load;
 }
-
