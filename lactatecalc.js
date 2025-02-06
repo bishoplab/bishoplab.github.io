@@ -17,25 +17,43 @@ function initializeGraph() {
       }]
     },
     options: {
-      responsive: true,
-      maintainAspectRatio: false, // Allow the chart to be flexible
+      responsive: false, // Disable responsive resizing
+      maintainAspectRatio: true, // Keep the aspect ratio fixed
       aspectRatio: 2, // Set a custom aspect ratio (height/width)
       plugins: {
         legend: { display: false }
       },
       scales: {
         x: { 
-          title: { display: true, text: 'Load', font: { size: 16 } }, 
+          title: { 
+            display: true, 
+            text: 'Load', 
+            font: { size: 16 }, 
+            padding: { top: 20 } // Add space between x-axis title and graph
+          }, 
           min: 0,
-          ticks: { font: { size: 14 } } // Adjust font size for x-axis ticks
+          ticks: { 
+            font: { size: 14 },
+            padding: 10 // Adjust spacing for x-axis ticks
+          }
         },
         y: { 
-          title: { display: true, text: 'Lactate Concentration', font: { size: 16 } },
+          title: { 
+            display: true, 
+            text: 'Lactate Concentration', 
+            font: { size: 16 }, 
+            padding: { bottom: 20 } // Add space between y-axis title and graph
+          },
           min: 0,
-          ticks: { font: { size: 14 } } // Adjust font size for y-axis ticks
+          ticks: { 
+            font: { size: 14 },
+            padding: 10 // Adjust spacing for y-axis ticks
+          }
         }
       }
     }
   });
-}
 
+  // Ensure the table starts with one row
+  addRow();
+}
