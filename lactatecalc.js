@@ -110,13 +110,20 @@ function updateGraph() {
   chart.data.datasets[1].data = polynomialCurve; // Add polynomial fit curve
 
   // Update the title with the R² value
-  chart.options.plugins.title.text = Lactate Threshold Curve (R²: ${rSquared.toFixed(4)});
+  chart.options.plugins.title.text = `Lactate Threshold Curve (R²: ${rSquared.toFixed(4)})`;
 
-  // Calculate the Modified Dmax point (Load at the Dmax point)
+  // Calculate the Lactate Threshold (where y = 4)
+  let lactateThreshold = findLactateThreshold(coefficients, 4);
+  document.getElementById('lactate-threshold-value').textContent = `Lactate Threshold: Load = ${lactateThreshold.toFixed(2)}`;
+
+  // Calculate DMAX
+  let dmax = calculateDMAX(coefficients, dataPoints);
+  document.getElementById('dmax-value').textContent = `DMAX: Load = ${dmax.toFixed(2)}`;
+
+  // Calculate Modified DMAX
   let modifiedDmax = calculateModifiedDmax(coefficients);
-
-  // Calculate the y-value for the Modified Dmax Load
   let modifiedDmaxY = evaluatePolynomial(coefficients, modifiedDmax);
+  document.getElementById('modified-dmax-value').textContent = `Modified DMAX: Load = ${modifiedDmax.toFixed(2)}`;
 
   // Add a dotted line at the Modified Dmax Load
   chart.data.datasets.push({
@@ -130,6 +137,52 @@ function updateGraph() {
   });
 
   chart.update();
+}
+
+// Find the x-value where the polynomial curve equals a specific y-value (e.g., 4 for Lactate Threshold)
+function findLactateThreshold(coefficients, targetY) {
+  let xLow = 0;
+  let xHigh = 10;  // Start with a reasonable range
+  let tolerance = 0.001;
+
+  while (xHigh - xLow > tolerance) {
+    let xMid = (xLow + xHigh) / 2;
+    let yMid = evaluatePolynomial(coefficients, xMid);
+
+    if (yMid < targetY) {
+      xLow = xMid;
+    } else {
+      xHigh = xMid;
+    }
+  }
+
+  return (xLow + xHigh) / 2;
+}
+
+// Calculate the DMAX point (Max perpendicular distance to the straight line formed by first and last data points)
+function calculateDMAX(coefficients, dataPoints) {
+  // Find the straight line between the first and last data points
+  let firstPoint = dataPoints[0];
+  let lastPoint = dataPoints[dataPoints.length - 1];
+
+  let slope = (lastPoint.y - firstPoint.y) / (lastPoint.x - firstPoint.x);
+  let intercept = firstPoint.y - slope * firstPoint.x;
+
+  // Compute the perpendicular distances and find the maximum distance
+  let maxDistance = 0;
+  let dmaxX = 0;
+
+  for (let point of dataPoints) {
+    let yLine = slope * point.x + intercept;
+    let distance = Math.abs(point.y - yLine) / Math.sqrt(1 + Math.pow(slope, 2));
+
+    if (distance > maxDistance) {
+      maxDistance = distance;
+      dmaxX = point.x;
+    }
+  }
+
+  return dmaxX;
 }
 
 // Polynomial Regression (3rd-order)
