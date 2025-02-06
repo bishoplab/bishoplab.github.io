@@ -92,9 +92,10 @@ function updateGraph() {
     let x = parseFloat(inputs[0].value);
     let y = parseFloat(inputs[1].value);
 
-    if (!isNaN(x) && !isNaN(y) && y <= 12) {  // Set a cap to filter extreme values (e.g., y <= 12)
-      dataPoints.push({ x, y });
+    if (!isNaN(x) && !isNaN(y) && y <= 20 && x >= 0 && x <= 500) {  // Add an upper limit for x as well
+  dataPoints.push({ x, y });
     }
+
   }
 
   dataPoints.sort((a, b) => a.x - b.x); // Sort by x-value for the curve fitting
