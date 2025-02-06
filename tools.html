@@ -6,6 +6,8 @@
   <title>Bishop lab group</title>
   
   <link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRKBlEjJhMMLaSSzN4ucjIxORyhXlN_inv9ww&s" type="image/svg+xml">
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
@@ -14,6 +16,7 @@
       margin: 0;
       padding: 0;
       display: flex;
+      flex-direction: row;
     }
 
     .sidebar {
@@ -27,7 +30,7 @@
       padding-left: 10px;
       top: 80px;
     }
-
+    
     .sidebar a {
       display: block;
       color: #000;
@@ -35,6 +38,7 @@
       text-decoration: none;
       font-weight: bold;
     }
+    
     .sidebar a:hover {
       background-color: #ddd;
     }
@@ -43,6 +47,7 @@
       width: 100%;
       background-color: #82e781;
       color: white;
+      text-align: left;
       padding: 15px;
       font-size: 40px;
       font-weight: bold;
@@ -60,34 +65,41 @@
       margin-top: 70px;
     }
 
-    .hidden {
+    .table-container {
       display: none;
+      margin-top: 20px;
     }
-
-    .calculator-container {
-      display: flex;
-      gap: 20px;
-      align-items: center;
-    }
-
+    
     table {
       border-collapse: collapse;
-      width: 200px;
+      width: 250px;
+      margin-right: 20px;
+      float: left;
     }
+    
     th, td {
       border: 1px solid black;
       padding: 5px;
       text-align: center;
     }
-    #graphContainer {
+
+    button {
+      margin-top: 10px;
+      display: block;
+    }
+    
+    .graph-container {
       width: 300px;
-      height: 200px;
+      height: 250px;
+      float: left;
     }
   </style>
 </head>
 <body>
 
-  <div class="header">Bishop lab group</div>
+  <div class="header">
+    Bishop lab group
+  </div>
 
   <div class="sidebar">
     <a href="index.html">Team</a>
@@ -99,81 +111,97 @@
 
   <div class="content">
     <h2>Tool list</h2>
-    <button onclick="showCalculator()">Lactate Threshold Calculator</button>
-    
-    <div id="calculator" class="hidden">
-      <div class="calculator-container">
-        <table>
-          <thead>
-            <tr>
-              <th>X</th>
-              <th>Y</th>
-            </tr>
-          </thead>
-          <tbody id="dataTable">
-            <tr><td><input type="number"></td><td><input type="number"></td></tr>
-            <tr><td><input type="number"></td><td><input type="number"></td></tr>
-            <tr><td><input type="number"></td><td><input type="number"></td></tr>
-          </tbody>
-        </table>
-        <button onclick="addRow()">Add Row</button>
-        <button onclick="plotGraph()">Plot Graph</button>
-      
-        <div id="graphContainer">
-          <canvas id="lactateChart"></canvas>
-        </div>
+    <button onclick="showTable()">Lactate Threshold Calculator</button>
+    <div class="table-container" id="tableContainer">
+      <table>
+        <thead>
+          <tr>
+            <th>Load</th>
+            <th>Lactate conc.</th>
+          </tr>
+        </thead>
+        <tbody id="dataTable">
+        </tbody>
+      </table>
+      <button onclick="addRow()">Add Row</button>
+      <button onclick="plotGraph()">Plot Graph</button>
+      <div class="graph-container">
+        <canvas id="lactateChart"></canvas>
       </div>
     </div>
   </div>
 
   <script>
-    function showCalculator() {
-      document.getElementById('calculator').classList.toggle('hidden');
+    function showTable() {
+      document.getElementById('tableContainer').style.display = 'block';
     }
 
     function addRow() {
       let table = document.getElementById('dataTable');
       let row = table.insertRow();
-      row.innerHTML = '<td><input type="number"></td><td><input type="number"></td>';
+      let cell1 = row.insertCell(0);
+      let cell2 = row.insertCell(1);
+      cell1.innerHTML = '<input type="number">';
+      cell2.innerHTML = '<input type="number">';
     }
 
     function plotGraph() {
       let table = document.getElementById('dataTable');
-      let xValues = [], yValues = [];
-      for (let row of table.rows) {
-        let x = row.cells[0].querySelector('input').value;
-        let y = row.cells[1].querySelector('input').value;
+      let xValues = [];
+      let yValues = [];
+      
+      for (let i = 0; i < table.rows.length; i++) {
+        let x = table.rows[i].cells[0].querySelector('input').value;
+        let y = table.rows[i].cells[1].querySelector('input').value;
         if (x && y) {
           xValues.push(parseFloat(x));
           yValues.push(parseFloat(y));
         }
       }
-
+      
       let ctx = document.getElementById('lactateChart').getContext('2d');
-      if (window.lactateChart) window.lactateChart.destroy();
+      if (window.lactateChart) {
+        window.lactateChart.destroy();
+      }
       window.lactateChart = new Chart(ctx, {
         type: 'scatter',
         data: {
           datasets: [{
-            data: xValues.map((x, i) => ({ x, y: yValues[i] })),
-            borderColor: 'black',
+            data: xValues.map((x, i) => ({ x: x, y: yValues[i] })),
             backgroundColor: 'black',
+            borderColor: 'black',
             showLine: true,
-            fill: false,
+            borderWidth: 1,
             pointRadius: 5,
-            borderWidth: 2,
+            fill: false
           }]
         },
         options: {
           responsive: false,
-          plugins: { legend: { display: false } },
           scales: {
-            x: { title: { display: true, text: 'X' } },
-            y: { title: { display: true, text: 'Y' } }
+            x: {
+              title: {
+                display: true,
+                text: 'Load'
+              }
+            },
+            y: {
+              title: {
+                display: true,
+                text: 'Lactate conc.'
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              display: false
+            }
           }
         }
       });
     }
   </script>
+
 </body>
 </html>
+
