@@ -208,5 +208,6 @@ function calculateRSquared(points, polynomialCurve) {
   let meanY = points.reduce((sum, p) => sum + p.y, 0) / points.length;
   let ssTotal = points.reduce((sum, p) => sum + Math.pow(p.y - meanY, 2), 0);
   let ssResidual = points.reduce((sum, p, i) => sum + Math.pow(p.y - polynomialCurve[i].y, 2), 0);
-  return 
+  return 1 - (ssResidual / ssTotal);
+}
 
