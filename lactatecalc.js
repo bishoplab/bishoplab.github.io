@@ -92,16 +92,16 @@ function updateGraph() {
     let x = parseFloat(inputs[0].value);
     let y = parseFloat(inputs[1].value);
 
-    if (!isNaN(x) && !isNaN(y) && y <= 20) {  // Set a cap to filter extreme values (e.g., y <= 12)
+    if (!isNaN(x) && !isNaN(y) && y <= 12) {  // Filter extreme values (e.g., y <= 12)
       dataPoints.push({ x, y });
     }
   }
 
-  dataPoints.sort((a, b) => a.x - b.x); // Sort by x-value for the curve fitting
+  dataPoints.sort((a, b) => a.x - b.x); // Sort by x-value for fitting
 
-  if (dataPoints.length < 2) return; // Ensure at least two points for fitting
+  if (dataPoints.length < 2) return; // Ensure at least two points
 
-  // Normalize the y-values before fitting to prevent large values from causing issues
+  // Normalize the y-values before fitting
   let maxY = Math.max(...dataPoints.map(p => p.y));
   let minY = Math.min(...dataPoints.map(p => p.y));
   let rangeY = maxY - minY;
@@ -112,7 +112,12 @@ function updateGraph() {
 
   // Polynomial regression (3rd-order) to fit a curve
   let coefficients = polynomialRegression(normalizedDataPoints, 3);
-  let polynomialCurve = generatePolynomialCurve(coefficients, normalizedDataPoints);
+
+  // Ensure we only generate the polynomial curve within the range of x-values
+  let xMin = Math.min(...dataPoints.map(p => p.x));
+  let xMax = Math.max(...dataPoints.map(p => p.x));
+
+  let polynomialCurve = generatePolynomialCurve(coefficients, normalizedDataPoints, xMin, xMax);
 
   // Calculate R² value
   let rSquared = calculateRSquared(normalizedDataPoints, polynomialCurve);
@@ -124,7 +129,7 @@ function updateGraph() {
   // Update the title with the R² value
   chart.options.plugins.title.text = `Lactate Threshold Curve (R²: ${rSquared.toFixed(4)})`;
 
-  // Calculate the Lactate Threshold (where y = 4)
+  // Calculate Lactate Threshold (where y = 4)
   let lactateThreshold = findLactateThreshold(coefficients, 4);
   document.getElementById('lactate-threshold-value').textContent = `Lactate Threshold: Load = ${lactateThreshold.toFixed(2)}`;
 
@@ -149,6 +154,23 @@ function updateGraph() {
   });
 
   chart.update();
+}
+
+// Helper function to generate the polynomial curve only within the bounds of the input data
+function generatePolynomialCurve(coefficients, dataPoints, xMin, xMax) {
+  let step = (xMax - xMin) / 100;  // Define the number of points for the curve
+  let curve = [];
+  for (let i = xMin; i <= xMax; i += step) {
+    let normalizedY = evaluatePolynomial(coefficients, i);
+    let realY = normalizedY * (Math.max(...dataPoints.map(p => p.y)) - Math.min(...dataPoints.map(p => p.y))) + Math.min(...dataPoints.map(p => p.y));
+    curve.push({ x: i, y: realY });
+  }
+  return curve;
+}
+
+// Polynomial evaluation function (for normalized values)
+function evaluatePolynomial(coefficients, x) {
+  return coefficients.reduce((acc, coeff, index) => acc + coeff * Math.pow(x, coefficients.length - index - 1), 0);
 }
 
 // Find the x-value where the polynomial curve equals a specific y-value (e.g., 4 for Lactate Threshold)
