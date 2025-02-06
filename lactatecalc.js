@@ -38,7 +38,7 @@ function initializeGraph() {
         backgroundColor: 'transparent',
         fill: false,
         showLine: true,
-        tension: 0, // No bezier curves, just straight lines
+        tension: 0, // No bezier curves, just smooth line
         borderWidth: 2,
         data: [] // Polynomial curve data, initially empty
       }]
@@ -155,4 +155,5 @@ function calculateRSquared(points, polynomialCurve) {
   let ssResidual = points.reduce((sum, p, i) => sum + Math.pow(p.y - polynomialCurve[i].y, 2), 0);
   return 1 - (ssResidual / ssTotal);
 }
+
 
