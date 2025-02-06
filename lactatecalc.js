@@ -29,7 +29,7 @@ function addRow() {
 function initializeGraph() {
   let ctx = document.getElementById('lactateChart').getContext('2d');
 
-  chart = new Chart(ctx, {
+ chart = new Chart(ctx, {
     type: 'scatter',
     data: {
       datasets: [{
@@ -44,7 +44,7 @@ function initializeGraph() {
         backgroundColor: 'transparent',
         fill: false,
         showLine: true,
-        tension: 0,
+        tension: 0, // No bezier curves, just straight lines
         borderWidth: 2,
         data: [] // Polynomial curve data, initially empty
       }]
