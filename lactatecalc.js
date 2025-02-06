@@ -44,7 +44,7 @@ function initializeGraph() {
         backgroundColor: 'transparent',
         fill: false,
         showLine: true,
-        tension: 0,
+        tension: 0, // No bezier curves, just straight lines
         borderWidth: 2,
         data: [] // Polynomial curve data, initially empty
       }]
@@ -94,14 +94,16 @@ function updateGraph() {
 
   // Polynomial regression (3rd-order) to fit a curve
   let coefficients = polynomialRegression(dataPoints, 3);
-  let polynomialCurve = generatePolynomialCurve(coefficients, dataPoints);
+  
+  // Generate a smooth polynomial curve by interpolating between the data points
+  let polynomialCurve = generateSmoothedPolynomialCurve(coefficients, dataPoints);
 
   // Calculate R² value
   let rSquared = calculateRSquared(dataPoints, polynomialCurve);
 
   // Update chart with data points and polynomial curve
   chart.data.datasets[0].data = dataPoints; // Black dots
-  chart.data.datasets[1].data = polynomialCurve; // Red polynomial line
+  chart.data.datasets[1].data = polynomialCurve; // Red polynomial line (without dots)
   
   // Update the title with the R² value
   chart.options.plugins.title.text = `Lactate Threshold Curve (R²: ${rSquared.toFixed(4)})`;
@@ -132,14 +134,24 @@ function polynomialRegression(points, degree) {
   return coefficients;
 }
 
-// Generate y-values for the polynomial curve based on the fitted coefficients
-function generatePolynomialCurve(coefficients, points) {
-  return points.map(point => {
+// Generate smoothed y-values for the polynomial curve based on the fitted coefficients
+function generateSmoothedPolynomialCurve(coefficients, points) {
+  // Generate x-values for a smooth curve
+  let xMin = Math.min(...points.map(p => p.x));
+  let xMax = Math.max(...points.map(p => p.x));
+  let smoothXValues = [];
+  
+  // Creating more points between xMin and xMax to smooth the curve
+  for (let i = 0; i <= 100; i++) {
+    smoothXValues.push(xMin + (xMax - xMin) * i / 100);
+  }
+
+  return smoothXValues.map(x => {
     let y = 0;
     for (let i = 0; i < coefficients.length; i++) {
-      y += coefficients[i] * Math.pow(point.x, coefficients.length - 1 - i);
+      y += coefficients[i] * Math.pow(x, coefficients.length - 1 - i);
     }
-    return { x: point.x, y: y };
+    return { x: x, y: y };
   });
 }
 
@@ -150,3 +162,4 @@ function calculateRSquared(points, polynomialCurve) {
   let ssResidual = points.reduce((sum, p, i) => sum + Math.pow(p.y - polynomialCurve[i].y, 2), 0);
   return 1 - (ssResidual / ssTotal);
 }
+
