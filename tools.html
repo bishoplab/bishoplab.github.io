@@ -3,14 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bishop lab group</title>
+  <title>Bishop Lab Group</title>
   
-  <!-- Link to Google Fonts for Jost font -->
   <link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;700&display=swap" rel="stylesheet">
-
-  <link rel="icon" href="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRKBlEjJhMMLaSSzN4ucjIxORyhXlN_inv9ww&s" type="image/svg+xml">
-  
-  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
@@ -19,7 +14,6 @@
       margin: 0;
       padding: 0;
       display: flex;
-      flex-direction: row;
     }
 
     .sidebar {
@@ -34,7 +28,7 @@
       top: 80px;
       margin-top: 0;
     }
-    
+
     .sidebar a {
       display: block;
       color: #000;
@@ -42,10 +36,6 @@
       text-decoration: none;
       margin-bottom: 5px;
       font-weight: bold;
-    }
-    
-    .sidebar a:hover {
-      background-color: #ddd;
     }
 
     .header {
@@ -120,13 +110,12 @@
       max-width: 100%;
       max-height: 100%;
     }
-
   </style>
 </head>
 <body>
 
   <div class="header">
-    Bishop lab group
+    Bishop Lab Group
   </div>
 
   <div class="sidebar">
@@ -138,7 +127,7 @@
   </div>
 
   <div class="content">
-    <h2>Tool list</h2>
+    <h2>Tool List</h2>
 
     <button class="tool-button" onclick="toggleTool()">Lactate Threshold Calculator</button>
 
@@ -160,7 +149,6 @@
 
         <div class="buttons">
           <button onclick="addRow()">Add Row</button>
-          <button onclick="plotGraph()">Plot Graph</button>
         </div>
       </div>
 
@@ -178,6 +166,10 @@
     function toggleTool() {
       let toolContainer = document.getElementById('tool-container');
       toolContainer.style.display = (toolContainer.style.display === 'none' || toolContainer.style.display === '') ? 'flex' : 'none';
+
+      if (!chart) {
+        initializeGraph();
+      }
     }
 
     function addRow() {
@@ -186,14 +178,49 @@
       let cell1 = newRow.insertCell(0);
       let cell2 = newRow.insertCell(1);
       
-      cell1.innerHTML = '<input type="number" step="any">';
-      cell2.innerHTML = '<input type="number" step="any">';
+      cell1.innerHTML = '<input type="number" step="any" oninput="updateGraph()">';
+      cell2.innerHTML = '<input type="number" step="any" oninput="updateGraph()">';
     }
 
-    function plotGraph() {
+    function initializeGraph() {
+      let ctx = document.getElementById('lactateChart').getContext('2d');
+
+      chart = new Chart(ctx, {
+        type: 'scatter',
+        data: {
+          datasets: [{
+            label: 'Lactate Threshold Data',
+            borderColor: 'black',
+            backgroundColor: 'black',
+            showLine: true,
+            fill: false,
+            tension: 0.3, 
+            borderWidth: 2,
+            pointRadius: 5,
+            pointBackgroundColor: 'black',
+            data: []
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            x: { title: { display: true, text: 'Load' } },
+            y: { title: { display: true, text: 'Lactate Concentration' } }
+          }
+        }
+      });
+    }
+
+    function updateGraph() {
+      if (!chart) return;
+
       let table = document.getElementById("data-table").getElementsByTagName('tbody')[0];
       let rows = table.getElementsByTagName('tr');
-      
+
       let xValues = [];
       let yValues = [];
 
@@ -211,45 +238,12 @@
       // Sort values by x-axis
       let combined = xValues.map((x, i) => ({ x, y: yValues[i] }));
       combined.sort((a, b) => a.x - b.x);
-      xValues = combined.map(pair => pair.x);
-      yValues = combined.map(pair => pair.y);
+      let sortedData = combined.map(pair => ({ x: pair.x, y: pair.y }));
 
-      let ctx = document.getElementById('lactateChart').getContext('2d');
-
-      if (chart) {
-        chart.destroy();
-      }
-
-      chart = new Chart(ctx, {
-        type: 'scatter',
-        data: {
-          datasets: [{
-            data: xValues.map((x, i) => ({ x: x, y: yValues[i] })),
-            borderColor: 'black',
-            backgroundColor: 'black',
-            showLine: true,
-            fill: false,
-            tension: 0.3, 
-            borderWidth: 2,
-            pointRadius: 5,
-            pointBackgroundColor: 'black'
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false }
-          },
-          scales: {
-            x: { title: { display: true, text: 'Load' } },
-            y: { title: { display: true, text: 'Lactate Concentration' } }
-          }
-        }
-      });
+      chart.data.datasets[0].data = sortedData;
+      chart.update();
     }
   </script>
 
 </body>
 </html>
-
