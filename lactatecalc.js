@@ -50,10 +50,19 @@ function initializeGraph() {
       }]
     },
     options: {
-      responsive: false,
-      maintainAspectRatio: false,
+      responsive: true,
+      maintainAspectRatio: true,
+      aspectRatio: 1, // Set aspect ratio to 1 to prevent stretching
       plugins: {
-        legend: { display: false }
+        legend: { display: false },
+        tooltip: { enabled: false }, // Disable tooltip as it's not needed for this chart
+        title: {
+          display: true,
+          text: 'Lactate Threshold Curve (R²: )',
+          font: {
+            size: 16
+          }
+        }
       },
       scales: {
         x: { title: { display: true, text: 'Load' }, min: 0 },
@@ -87,9 +96,16 @@ function updateGraph() {
   let coefficients = polynomialRegression(dataPoints, 3);
   let polynomialCurve = generatePolynomialCurve(coefficients, dataPoints);
 
-  // Update data points and polynomial line
+  // Calculate R² value
+  let rSquared = calculateRSquared(dataPoints, polynomialCurve);
+
+  // Update chart with data points and polynomial curve
   chart.data.datasets[0].data = dataPoints; // Black dots
   chart.data.datasets[1].data = polynomialCurve; // Red polynomial line
+  
+  // Update the title with the R² value
+  chart.options.plugins.title.text = `Lactate Threshold Curve (R²: ${rSquared.toFixed(4)})`;
+
   chart.update();
 }
 
@@ -126,3 +142,12 @@ function generatePolynomialCurve(coefficients, points) {
     return { x: point.x, y: y };
   });
 }
+
+// Calculate R² value for the regression
+function calculateRSquared(points, polynomialCurve) {
+  let meanY = points.reduce((sum, p) => sum + p.y, 0) / points.length;
+  let ssTotal = points.reduce((sum, p) => sum + Math.pow(p.y - meanY, 2), 0);
+  let ssResidual = points.reduce((sum, p, i) => sum + Math.pow(p.y - polynomialCurve[i].y, 2), 0);
+  return 1 - (ssResidual / ssTotal);
+}
+
