@@ -33,16 +33,16 @@ function initializeGraph() {
     data: {
       datasets: [
         {
-          label: 'Lactate Data Points',
+          label: 'Data Points',
           borderColor: 'black',
           backgroundColor: 'black',
           fill: false,
           showLine: false,
           pointRadius: 5,
-          data: [] 
+          data: []
         },
         {
-          label: 'Lactate Threshold Curve',
+          label: 'Polynomial Fit',
           borderColor: 'red',
           backgroundColor: 'transparent',
           fill: false,
@@ -50,7 +50,7 @@ function initializeGraph() {
           tension: 0.4,
           borderWidth: 2,
           pointRadius: 0,
-          data: [] 
+          data: []
         }
       ]
     },
@@ -68,8 +68,8 @@ function initializeGraph() {
         }
       },
       scales: {
-        x: { title: { display: true, text: 'Exercise Load' }, min: 0 },
-        y: { title: { display: true, text: 'Lactate Concentration (mmol/L)' }, min: 0 }
+        x: { title: { display: true, text: 'Load' }, min: 0 },
+        y: { title: { display: true, text: 'Lactate Concentration' }, min: 0 }
       }
     }
   });
@@ -80,91 +80,84 @@ function updateGraph() {
 
   let table = document.getElementById("data-table").getElementsByTagName('tbody')[0];
   let rows = table.getElementsByTagName('tr');
-  let dataPoints = [];
 
+  let dataPoints = [];
   for (let row of rows) {
     let inputs = row.getElementsByTagName('input');
     let x = parseFloat(inputs[0].value);
     let y = parseFloat(inputs[1].value);
-
     if (!isNaN(x) && !isNaN(y)) {
       dataPoints.push({ x, y });
     }
   }
-
   dataPoints.sort((a, b) => a.x - b.x);
 
   let coefficients = polynomialRegression(dataPoints, 3);
   let polynomialCurve = generatePolynomialCurve(coefficients, dataPoints);
   let rSquared = calculateRSquared(dataPoints, polynomialCurve);
-
   chart.data.datasets[0].data = dataPoints;
   chart.data.datasets[1].data = polynomialCurve;
   chart.options.plugins.title.text = `Lactate Threshold Curve (R²: ${rSquared.toFixed(4)})`;
 
-  let modifiedDmax = calculateModifiedDmax(coefficients);
-  let modifiedDmaxY = evaluatePolynomial(coefficients, modifiedDmax);
+  let lactateThreshold4 = findThreshold(coefficients, 4);
+  let dmax = calculateDmax(dataPoints, polynomialCurve);
+  let dmaxMod = calculateDmaxMod(dataPoints, polynomialCurve);
 
-  chart.data.datasets.push({
-    label: 'Modified Dmax Threshold',
-    borderColor: 'blue',
-    backgroundColor: 'transparent',
-    borderDash: [5, 5],
-    fill: false,
-    data: [{ x: modifiedDmax, y: 0 }, { x: modifiedDmax, y: modifiedDmaxY }],
-    pointRadius: 0
-  });
-
+  displayThresholds(lactateThreshold4, dmax, dmaxMod);
   chart.update();
 }
 
-function polynomialRegression(points, degree) {
-  let xValues = points.map(p => p.x);
-  let yValues = points.map(p => p.y);
-  let X = [];
+function findThreshold(coefficients, target) {
+  let minX = 0, maxX = 100;
+  for (let x = minX; x <= maxX; x += 0.1) {
+    let y = evaluatePolynomial(coefficients, x);
+    if (Math.abs(y - target) < 0.1) return x;
+  }
+  return NaN;
+}
 
-  for (let i = 0; i < points.length; i++) {
-    X[i] = [];
-    for (let j = 0; j <= degree; j++) {
-      X[i][j] = Math.pow(xValues[i], degree - j);
+function calculateDmax(points, curve) {
+  let first = points[0], last = points[points.length - 1];
+  let maxDist = 0, bestX = NaN;
+  for (let p of curve) {
+    let d = perpendicularDistance(first, last, p);
+    if (d > maxDist) {
+      maxDist = d;
+      bestX = p.x;
     }
   }
-
-  let Xt = math.transpose(X);
-  let XtX = math.multiply(Xt, X);
-  let XtY = math.multiply(Xt, yValues);
-  let coefficients = math.lusolve(XtX, XtY);
-
-  return coefficients;
+  return bestX;
 }
 
-function generatePolynomialCurve(coefficients, points) {
-  return points.map(point => {
-    let y = 0;
-    for (let i = 0; i < coefficients.length; i++) {
-      y += coefficients[i] * Math.pow(point.x, coefficients.length - 1 - i);
+function calculateDmaxMod(points, curve) {
+  let index = points.findIndex((p, i) => i > 0 && p.y - points[i - 1].y > 0.4);
+  let refPoint = index > 0 ? points[index - 1] : points[0];
+  let last = points[points.length - 1];
+  let maxDist = 0, bestX = NaN;
+  for (let p of curve) {
+    let d = perpendicularDistance(refPoint, last, p);
+    if (d > maxDist) {
+      maxDist = d;
+      bestX = p.x;
     }
-    return { x: point.x, y: y };
-  });
+  }
+  return bestX;
 }
 
-function calculateRSquared(points, polynomialCurve) {
-  let meanY = points.reduce((sum, p) => sum + p.y, 0) / points.length;
-  let ssTotal = points.reduce((sum, p) => sum + Math.pow(p.y - meanY, 2), 0);
-  let ssResidual = points.reduce((sum, p, i) => sum + Math.pow(p.y - polynomialCurve[i].y, 2), 0);
-  return 1 - (ssResidual / ssTotal);
+function displayThresholds(lt4, dmax, dmaxMod) {
+  document.getElementById("threshold-results").innerHTML = `
+    <p><strong>Lactate 4.0 mmol/L:</strong> ${lt4.toFixed(2)}</p>
+    <p><strong>DMAX:</strong> ${dmax.toFixed(2)}</p>
+    <p><strong>DMAX MOD:</strong> ${dmaxMod.toFixed(2)}</p>
+  `;
 }
 
-function calculateModifiedDmax(coefficients) {
-  let a = coefficients[0];
-  let b = coefficients[1];
-  return -b / (3 * a);
+function perpendicularDistance(p1, p2, p) {
+  let num = Math.abs((p2.y - p1.y) * p.x - (p2.x - p1.x) * p.y + p2.x * p1.y - p2.y * p1.x);
+  let den = Math.sqrt(Math.pow(p2.y - p1.y, 2) + Math.pow(p2.x - p1.x, 2));
+  return num / den;
 }
 
 function evaluatePolynomial(coefficients, x) {
-  let y = 0;
-  for (let i = 0; i < coefficients.length; i++) {
-    y += coefficients[i] * Math.pow(x, coefficients.length - 1 - i);
-  }
-  return y;
+  return coefficients.reduce((sum, c, i) => sum + c * Math.pow(x, coefficients.length - 1 - i), 0);
 }
