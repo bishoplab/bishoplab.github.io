@@ -92,7 +92,7 @@ function updateGraph() {
     let x = parseFloat(inputs[0].value);
     let y = parseFloat(inputs[1].value);
 
-    if (!isNaN(x) && !isNaN(y) && y <= 12) {  // Set a cap to filter extreme values (e.g., y <= 12)
+    if (!isNaN(x) && !isNaN(y) && y <= 20) {  // Set a cap to filter extreme values (e.g., y <= 12)
       dataPoints.push({ x, y });
     }
   }
