@@ -141,8 +141,9 @@ function updateGraph() {
 
 // Find the x-value where the polynomial curve equals a specific y-value (e.g., 4 for Lactate Threshold)
 function findLactateThreshold(coefficients, targetY) {
-  let xLow = 0;
-  let xHigh = 10;  // Start with a reasonable range
+  // Find the x-value where the polynomial curve equals the target Y value
+  let xLow = Math.min(...dataPoints.map(p => p.x));  // Set the lower bound to the smallest x value
+  let xHigh = Math.max(...dataPoints.map(p => p.x)); // Set the upper bound to the largest x value
   let tolerance = 0.001;
 
   while (xHigh - xLow > tolerance) {
@@ -150,9 +151,9 @@ function findLactateThreshold(coefficients, targetY) {
     let yMid = evaluatePolynomial(coefficients, xMid);
 
     if (yMid < targetY) {
-      xLow = xMid;
+      xLow = xMid; // Move the lower bound up
     } else {
-      xHigh = xMid;
+      xHigh = xMid; // Move the upper bound down
     }
   }
 
