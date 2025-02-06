@@ -100,12 +100,25 @@ function updateGraph() {
   // Calculate R² value
   let rSquared = calculateRSquared(dataPoints, polynomialCurve);
 
+  // Calculate the Modified Dmax point
+  let modifiedDmax = calculateModifiedDmax(coefficients);
+  let modifiedDmaxPoint = { x: modifiedDmax, y: evaluatePolynomial(coefficients, modifiedDmax) };
+
   // Update chart with data points and polynomial curve
   chart.data.datasets[0].data = dataPoints; // Black dots
   chart.data.datasets[1].data = polynomialCurve; // Red polynomial line (smooth)
 
   // Update the title with the R² value
   chart.options.plugins.title.text = `Lactate Threshold Curve (R²: ${rSquared.toFixed(4)})`;
+
+  // Add the Modified Dmax point to the graph
+  chart.data.datasets.push({
+    label: 'Modified Dmax Point',
+    borderColor: 'blue',
+    backgroundColor: 'blue',
+    pointRadius: 7,
+    data: [modifiedDmaxPoint]
+  });
 
   chart.update();
 }
@@ -151,3 +164,26 @@ function calculateRSquared(points, polynomialCurve) {
   let ssResidual = points.reduce((sum, p, i) => sum + Math.pow(p.y - polynomialCurve[i].y, 2), 0);
   return 1 - (ssResidual / ssTotal);
 }
+
+// Calculate the second derivative of the polynomial and find its maximum (Modified Dmax)
+function calculateModifiedDmax(coefficients) {
+  // Second derivative for a cubic function: ax^3 + bx^2 + cx + d
+  // The second derivative is: 6ax + 2b
+  let a = coefficients[0];
+  let b = coefficients[1];
+  
+  // Find the x-value where the second derivative equals zero
+  let xModifiedDmax = -b / (3 * a);  // Solve 6ax + 2b = 0
+  
+  return xModifiedDmax;
+}
+
+// Evaluate polynomial at x value
+function evaluatePolynomial(coefficients, x) {
+  let y = 0;
+  for (let i = 0; i < coefficients.length; i++) {
+    y += coefficients[i] * Math.pow(x, coefficients.length - 1 - i);
+  }
+  return y;
+}
+
