@@ -5,13 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bishop lab group</title>
   
-  <!-- Link to Google Fonts for Jost font -->
   <link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;700&display=swap" rel="stylesheet">
-
-  <link rel="icon" href="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRKBlEjJhMMLaSSzN4ucjIxORyhXlN_inv9ww&s" type="image/svg+xml">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   
-  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-
   <style>
     body {
       font-family: 'Jost', sans-serif;
@@ -20,9 +16,8 @@
       display: flex;
       flex-direction: row;
     }
-
     .sidebar {
-      width: 115px;
+      width: 150px;
       background-color: #f4f4f4;
       padding-top: 10px;
       position: fixed;
@@ -31,152 +26,106 @@
       font-size: 18px;
       padding-left: 10px;
       top: 80px;
-      margin-top: 0;
     }
-    
-    .sidebar h2 {
-      margin-top: 0;
-      margin-bottom: 5px;
-      padding-bottom: 5px;
-    }
-    
     .sidebar a {
       display: block;
       color: #000;
-      padding: 5px 5px;
+      padding: 10px;
       text-decoration: none;
-      margin-bottom: 5px;
       font-weight: bold;
     }
-    
     .sidebar a:hover {
       background-color: #ddd;
     }
-
     .header {
       width: 100%;
       background-color: #82e781;
       color: white;
       text-align: left;
-      padding: 15px 15px;
+      padding: 15px;
       font-size: 40px;
       font-weight: bold;
       position: fixed;
       top: 0;
       left: 0;
-      z-index: 1;
       height: 60px;
     }
-
     .content {
-      margin-left: 130px;
-      padding: 10px;
+      margin-left: 160px;
+      padding: 20px;
       flex-grow: 1;
       margin-top: 70px;
     }
-
-    .prof-header {
-          display: flex;
-          align-items: center;
-          gap: 5px;
-        }
-    
-    .prof-header {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-
-    .icon-small a img {
-      width: 20px;
-      height: 20px;
-      transition: transform 0.3s ease;
-      gap: 5px;
-    }
-
-    .icon-small a:hover img {
-      transform: scale(1.25);
-    }
-
-    .prof-details {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      margin-top: 5px;
-    }
-
-    .prof-text {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      font-size: 14px;
-      margin-top: 5px;
-    }
-    
-    .prof-image {
-      width: 70px;
-      height: auto;
-      border-radius: 7px;
-    }
-
-    h2 {
-      margin-bottom: 5px;
-    }
-
-    h3 {
-      font-size: 18px;
-    }
-
-    div {
-      margin-bottom: 0px;
-    }
-
-    .container {
-      margin: 10px;
-    }
-    
-    h1 {
+    table, th, td {
+      border: 1px solid black;
+      border-collapse: collapse;
+      padding: 5px;
       text-align: center;
-      color: #2d3e50;
-        }
-    .publication {
-            background-color: white;
-            border-radius: 5px;
-            padding: 10px;
-            margin-bottom: 10px;
-            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
-        }
-        .publication h2 {
-            margin: 0;
-            color: #2d3e50;
-        }
-        .publication p {
-            margin: 5px 0;
-        }
-    
+    }
+    button {
+      margin-top: 10px;
+      padding: 5px 10px;
+      font-size: 16px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
-
-  <div class="header">
-    Bishop lab group
-  </div>
-
+  <div class="header">Bishop lab group</div>
   <div class="sidebar">
     <a href="index.html">Team</a>
     <a href="projects.html">Projects</a>
     <a href="publications.html">Publications</a>
     <a href="resources.html">Resources</a>
     <a href="tools.html">Tools</a>
+    <a href="#" onclick="showCalculator()">Lactate Threshold Calculator</a>
   </div>
-
   <div class="content">
-    
-  <h2>Tool list</h2>
-
-  <script src="script.js"></script>
-      
+    <h2>Lactate Threshold Calculator</h2>
+    <table id="dataTable">
+      <tr>
+        <th>X Value</th>
+        <th>Y Value</th>
+      </tr>
+    </table>
+    <button onclick="addRow()">Add Data Point</button>
+    <button onclick="plotGraph()">Plot Graph</button>
+    <canvas id="myChart" width="400" height="200"></canvas>
   </div>
-
+  <script>
+    function addRow() {
+      let table = document.getElementById("dataTable");
+      let row = table.insertRow(-1);
+      let cell1 = row.insertCell(0);
+      let cell2 = row.insertCell(1);
+      cell1.innerHTML = '<input type="number" class="x-values">';
+      cell2.innerHTML = '<input type="number" class="y-values">';
+    }
+    
+    function plotGraph() {
+      let xValues = Array.from(document.querySelectorAll(".x-values"))
+        .map(input => parseFloat(input.value) || 0);
+      let yValues = Array.from(document.querySelectorAll(".y-values"))
+        .map(input => parseFloat(input.value) || 0);
+      
+      let ctx = document.getElementById("myChart").getContext("2d");
+      new Chart(ctx, {
+        type: "scatter",
+        data: {
+          datasets: [{
+            label: "Lactate Threshold Data",
+            data: xValues.map((x, i) => ({ x: x, y: yValues[i] })),
+            backgroundColor: "blue"
+          }]
+        },
+        options: {
+          scales: {
+            x: { title: { display: true, text: "X Axis" } },
+            y: { title: { display: true, text: "Y Axis" } }
+          }
+        }
+      });
+    }
+  </script>
 </body>
 </html>
