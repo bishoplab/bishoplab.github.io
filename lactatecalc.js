@@ -32,17 +32,28 @@ function initializeGraph() {
   chart = new Chart(ctx, {
     type: 'scatter',
     data: {
-      datasets: [{
-        label: 'Polynomial Fit',
-        borderColor: 'red',
-        backgroundColor: 'transparent',
-        fill: false,
-        showLine: true,
-        tension: 0.4, // Smooth the line (non-zero value for smooth curve)
-        borderWidth: 2,
-        pointRadius: 5, // Data points still visible
-        data: [] // Polynomial curve data, initially empty
-      }]
+      datasets: [
+        {
+          label: 'Data Points',
+          borderColor: 'black',
+          backgroundColor: 'black',
+          fill: false,
+          showLine: false, // Points only
+          pointRadius: 5,
+          data: [] // Initially empty, will be filled with data points
+        },
+        {
+          label: 'Polynomial Fit',
+          borderColor: 'red',
+          backgroundColor: 'transparent',
+          fill: false,
+          showLine: true,
+          tension: 0.4,
+          borderWidth: 2,
+          pointRadius: 0, // No points for the polynomial curve
+          data: [] // Polynomial curve data
+        }
+      ]
     },
     options: {
       responsive: true,
@@ -94,10 +105,9 @@ function updateGraph() {
   // Calculate R² value
   let rSquared = calculateRSquared(dataPoints, polynomialCurve);
 
-  // Update chart with polynomial curve only (no points)
-  chart.data.datasets[0].data = dataPoints; // Data points included
-  chart.data.datasets[0].borderColor = 'red'; // Polynomial fit curve in red
-  chart.data.datasets[0].pointRadius = 5; // Keeping the data points visible
+  // Update chart with data points and polynomial curve
+  chart.data.datasets[0].data = dataPoints; // Add data points
+  chart.data.datasets[1].data = polynomialCurve; // Add polynomial fit curve
 
   // Update the title with the R² value
   chart.options.plugins.title.text = `Lactate Threshold Curve (R²: ${rSquared.toFixed(4)})`;
