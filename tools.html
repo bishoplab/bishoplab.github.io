@@ -121,14 +121,13 @@
     <a href="tools.html">Tools</a>
   </div>
 
-  <div class="content">
+ <div class="content">
     <h2>Tool List</h2>
 
-    <!-- Button to toggle the visibility of the lactate threshold calculator -->
     <button class="tool-button" onclick="toggleTool()">Lactate Threshold Calculator</button>
 
-    <!-- Tool container -->
-    <div class="tool-container" id="tool-container">
+    <div class="tool-container" id="tool-container" style="display: none;">
+      
       <!-- Table for input -->
       <div class="table-container">
         <table id="data-table">
@@ -157,21 +156,6 @@
   </div>
 
   <script src="lactatecalc.js"></script>
-
-  <!-- Add the script below to make the tool container toggle -->
-  <script>
-    function toggleTool() {
-      // Get the tool container element
-      const toolContainer = document.getElementById('tool-container');
-
-      // Toggle the display of the tool container
-      if (toolContainer.style.display === 'none' || toolContainer.style.display === '') {
-        toolContainer.style.display = 'block';
-      } else {
-        toolContainer.style.display = 'none';
-      }
-    }
-  </script>
 
 </body>
 </html>
