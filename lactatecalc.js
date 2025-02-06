@@ -110,15 +110,17 @@ function updateGraph() {
   chart.data.datasets[1].data = polynomialCurve; // Add polynomial fit curve
 
   // Update the title with the R² value
-  chart.options.plugins.title.text = Lactate Threshold Curve (R²: ${rSquared.toFixed(4)});
+  chart.options.plugins.title.text = `Lactate Threshold Curve (R²: ${rSquared.toFixed(4)})`;
 
-  // Calculate the Modified Dmax point (Load at the Dmax point)
-  let modifiedDmax = calculateModifiedDmax(coefficients);
-
-  // Calculate the y-value for the Modified Dmax Load
-  let modifiedDmaxY = evaluatePolynomial(coefficients, modifiedDmax);
+  // Calculate the three lactate threshold methods
+  let polynomialThresholdLoad = calculatePolynomialThreshold(coefficients);
+  let dmaxLoad = calculateDmax(coefficients, dataPoints);
+  let dmaxModLoad = calculateDmaxMod(coefficients, dataPoints);
 
   // Add a dotted line at the Modified Dmax Load
+  let modifiedDmax = calculateModifiedDmax(coefficients);
+  let modifiedDmaxY = evaluatePolynomial(coefficients, modifiedDmax);
+
   chart.data.datasets.push({
     label: 'Modified Dmax Line',
     borderColor: 'blue',
@@ -130,6 +132,13 @@ function updateGraph() {
   });
 
   chart.update();
+
+  // Display lactate threshold load values under the graph
+  document.getElementById("lactate-thresholds").innerHTML = `
+    Polynomial Threshold Load: ${polynomialThresholdLoad.toFixed(2)}<br>
+    DMAX Threshold Load: ${dmaxLoad.toFixed(2)}<br>
+    DMAX MOD Threshold Load: ${dmaxModLoad.toFixed(2)}
+  `;
 }
 
 // Polynomial Regression (3rd-order)
@@ -176,8 +185,6 @@ function calculateRSquared(points, polynomialCurve) {
 
 // Calculate the second derivative of the polynomial and find its maximum (Modified Dmax)
 function calculateModifiedDmax(coefficients) {
-  // Second derivative for a cubic function: ax^3 + bx^2 + cx + d
-  // The second derivative is: 6ax + 2b
   let a = coefficients[0];
   let b = coefficients[1];
   
@@ -195,3 +202,88 @@ function evaluatePolynomial(coefficients, x) {
   }
   return y;
 }
+
+// Calculate the polynomial threshold (lactate concentration = 4)
+function calculatePolynomialThreshold(coefficients) {
+  let thresholdY = 4;
+  let thresholdX = solvePolynomialForY(coefficients, thresholdY);
+  return thresholdX;
+}
+
+// Solve polynomial equation for a specific y-value
+function solvePolynomialForY(coefficients, yValue) {
+  let left = 0;
+  let right = 100; // Arbitrary range, adjust as necessary
+  let tolerance = 0.001;
+  let x = (left + right) / 2;
+
+  while (Math.abs(evaluatePolynomial(coefficients, x) - yValue) > tolerance) {
+    if (evaluatePolynomial(coefficients, x) < yValue) {
+      left = x;
+    } else {
+      right = x;
+    }
+    x = (left + right) / 2;
+  }
+
+  return x;
+}
+
+// Calculate DMAX (Max Perpendicular Distance)
+function calculateDmax(coefficients, dataPoints) {
+  // Calculate perpendicular distance from each point to the line formed by the first and last points
+  let startX = dataPoints[0].x;
+  let startY = dataPoints[0].y;
+  let endX = dataPoints[dataPoints.length - 1].x;
+  let endY = dataPoints[dataPoints.length - 1].y;
+
+  let maxDistance = 0;
+  let dmaxX = 0;
+
+  for (let point of dataPoints) {
+    let distance = perpendicularDistance(startX, startY, endX, endY, point.x, point.y);
+    if (distance > maxDistance) {
+      maxDistance = distance;
+      dmaxX = point.x;
+    }
+  }
+
+  return dmaxX;
+}
+
+// Perpendicular distance between a point and a line
+function perpendicularDistance(x1, y1, x2, y2, x, y) {
+  return Math.abs((y2 - y1) * x - (x2 - x1) * y + x2 * y1 - y2 * x1) / Math.sqrt(Math.pow(y2 - y1, 2) + Math.pow(x2 - x1, 2));
+}
+
+// Calculate DMAX MOD (Modified DMAX)
+function calculateDmaxMod(coefficients, dataPoints) {
+  let threshold = 0.4;
+  let breakPoint = 0;
+
+  for (let i = 1; i < dataPoints.length; i++) {
+    if (dataPoints[i].y - dataPoints[i - 1].y > threshold) {
+      breakPoint = i;
+      break;
+    }
+  }
+
+  let startX = dataPoints[breakPoint - 1].x;
+  let startY = dataPoints[breakPoint - 1].y;
+  let endX = dataPoints[dataPoints.length - 1].x;
+  let endY = dataPoints[dataPoints.length - 1].y;
+
+  let maxDistance = 0;
+  let dmaxModX = 0;
+
+  for (let point of dataPoints.slice(breakPoint)) {
+    let distance = perpendicularDistance(startX, startY, endX, endY, point.x, point.y);
+    if (distance > maxDistance) {
+      maxDistance = distance;
+      dmaxModX = point.x;
+    }
+  }
+
+  return dmaxModX;
+}
+
