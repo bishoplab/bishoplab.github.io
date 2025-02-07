@@ -117,24 +117,22 @@ function calculateRSquared(points, polynomialCurve) {
 
 // Function to find the max perpendicular distance and its x-coordinate
 // Function to find the max perpendicular distance and its x-coordinate along the polynomial curve
+// Function to find the max perpendicular distance and its x-coordinate from the polynomial curve
 function findMaxPerpendicularDistance(polynomialCurve) {
-  let firstPoint = polynomialCurve[0];
-  let lastPoint = polynomialCurve[polynomialCurve.length - 1];
-
-  // Equation of the linear line y = mx + b based on first and last polynomial points
-  let slope = (lastPoint.y - firstPoint.y) / (lastPoint.x - firstPoint.x);
-  let intercept = firstPoint.y - slope * firstPoint.x;
-
   let maxDistance = 0;
   let perpendicularX = null;
 
   // Iterate over the entire polynomial curve for maximum perpendicular distance
-  for (let point of polynomialCurve) {
+  for (let i = 1; i < polynomialCurve.length - 1; i++) {
+    let point = polynomialCurve[i];
     let x0 = point.x;
     let y0 = point.y;
 
-    // Calculate the perpendicular distance from (x0, y0) to the line y = mx + b
-    let distance = Math.abs(slope * x0 - y0 + intercept) / Math.sqrt(slope ** 2 + 1);
+    // Find the closest point on the polynomial curve from each point on the curve
+    let closestPoint = findClosestPointOnCurve(x0, polynomialCurve);
+
+    // Calculate the perpendicular distance from (x0, y0) to the polynomial curve
+    let distance = calculatePerpendicularDistance(point, closestPoint);
 
     if (distance > maxDistance) {
       maxDistance = distance;
@@ -143,6 +141,29 @@ function findMaxPerpendicularDistance(polynomialCurve) {
   }
 
   return { maxDistance, perpendicularX };
+}
+
+// Function to find the closest point on the curve from a given x0
+function findClosestPointOnCurve(x0, polynomialCurve) {
+  let minDistance = Infinity;
+  let closestPoint = null;
+
+  // Iterate through the polynomial curve to find the closest point to x0
+  for (let point of polynomialCurve) {
+    let distance = Math.abs(point.x - x0);
+    if (distance < minDistance) {
+      minDistance = distance;
+      closestPoint = point;
+    }
+  }
+
+  return closestPoint;
+}
+
+// Function to calculate the perpendicular distance between two points
+function calculatePerpendicularDistance(point, closestPoint) {
+  // Using Euclidean distance formula between two points
+  return Math.sqrt(Math.pow(point.x - closestPoint.x, 2) + Math.pow(point.y - closestPoint.y, 2));
 }
 
 // Function to display text on the chart
