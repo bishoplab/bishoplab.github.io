@@ -116,28 +116,29 @@ function calculateRSquared(points, polynomialCurve) {
 }
 
 // Function to find the max perpendicular distance and its x-coordinate
-function findMaxPerpendicularDistance(dataPoints, polynomialCurve) {
-  let firstPoint = dataPoints[0];
-  let lastPoint = dataPoints[dataPoints.length - 1];
+// Function to find the max perpendicular distance and its x-coordinate along the polynomial curve
+function findMaxPerpendicularDistance(polynomialCurve) {
+  let firstPoint = polynomialCurve[0];
+  let lastPoint = polynomialCurve[polynomialCurve.length - 1];
 
-  // Equation of the linear line y = mx + b
+  // Equation of the linear line y = mx + b based on first and last polynomial points
   let slope = (lastPoint.y - firstPoint.y) / (lastPoint.x - firstPoint.x);
   let intercept = firstPoint.y - slope * firstPoint.x;
 
   let maxDistance = 0;
   let perpendicularX = null;
 
-  // Iterate over the entire polynomial curve for maximum distance
+  // Iterate over the entire polynomial curve for maximum perpendicular distance
   for (let point of polynomialCurve) {
     let x0 = point.x;
     let y0 = point.y;
 
-    // Distance formula from point (x0, y0) to the line y = mx + b
+    // Calculate the perpendicular distance from (x0, y0) to the line y = mx + b
     let distance = Math.abs(slope * x0 - y0 + intercept) / Math.sqrt(slope ** 2 + 1);
 
     if (distance > maxDistance) {
       maxDistance = distance;
-      perpendicularX = x0;
+      perpendicularX = x0; // Store the x-coordinate of the max distance
     }
   }
 
@@ -195,8 +196,8 @@ function updateGraph() {
   // Calculate R² value for the regression
   let rSquared = calculateRSquared(dataPoints, polynomialCurve);
 
-  // Find the maximum perpendicular distance and its corresponding x value
-  let { maxDistance, perpendicularX } = findMaxPerpendicularDistance(dataPoints, polynomialCurve);
+  // Find the maximum perpendicular distance and its corresponding x value from the polynomial curve
+  let { maxDistance, perpendicularX } = findMaxPerpendicularDistance(polynomialCurve);
 
   // Update the chart with the new data points and polynomial curve
   chart.data.datasets[0].data = dataPoints; // Update black dots dataset
@@ -205,7 +206,7 @@ function updateGraph() {
   // Update chart title with R² value
   chart.options.plugins.title.text = `Lactate Threshold Curve (R²: ${rSquared.toFixed(4)})`;
 
-  // Update the text below the chart with the max perpendicular distance load
+  // Update the text below the chart with the Dmax
   displayTextBelowGraph(perpendicularX);
 
   // Finally, update the chart to reflect all changes
