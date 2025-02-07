@@ -149,12 +149,19 @@ function findMaxPerpendicularDistance(dataPoints, polynomialCurve) {
 // Function to display text on the chart
 function displayTextOnChart(xValue, maxDistance) {
   let ctx = chart.ctx;
+  
+  // Convert the xValue to chart pixel position
+  let xPos = chart.scales.x.getPixelForValue(xValue);
+  let yPos = chart.scales.y.getPixelForValue(maxDistance); // Optional: Place y position based on distance
+  
+  // Customize text appearance and position
   ctx.save();
   ctx.font = "14px Arial";
   ctx.fillStyle = "blue";
-  ctx.fillText(`Max Perpendicular X: ${xValue.toFixed(2)}`, 50, 50);
+  ctx.fillText(`Max Perpendicular X: ${xValue.toFixed(2)}`, xPos + 10, yPos - 10); // Adjust positioning
   ctx.restore();
 }
+
 
 
 // Polynomial Regression (3rd-order)
