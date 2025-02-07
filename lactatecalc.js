@@ -113,9 +113,13 @@ function calculateRSquared(points, polynomialCurve) {
   return 1 - (ssResidual / ssTotal);
 }
 
-function findMaxPerpendicularDistance(polynomialCurve) {
+function findMaxPerpendicularDistance(polynomialCurve, firstPoint, lastPoint) {
   let maxDistance = 0;
   let perpendicularX = null;
+  
+  // Calculate slope and intercept for the line connecting the first and last data points
+  let slope = (lastPoint.y - firstPoint.y) / (lastPoint.x - firstPoint.x);
+  let intercept = firstPoint.y - (slope * firstPoint.x);
 
   // Iterate over the polynomial curve to calculate the perpendicular distance at each point
   for (let i = 0; i < polynomialCurve.length; i++) {
@@ -123,35 +127,17 @@ function findMaxPerpendicularDistance(polynomialCurve) {
     let x0 = point.x;
     let y0 = point.y;
 
-    // Calculate the perpendicular distance from the point to the curve. 
-    // We can do this by finding the closest x-coordinate to the point and its corresponding y-value.
-    let closestPoint = findClosestPointOnCurve(polynomialCurve, x0);
-    let distance = Math.abs(y0 - closestPoint.y);
+    // Calculate the perpendicular distance from the point to the line using the distance formula
+    let distance = Math.abs(slope * x0 - y0 + intercept) / Math.sqrt(slope * slope + 1);
 
     // If the calculated perpendicular distance is greater than the current max distance, update it
     if (distance > maxDistance) {
       maxDistance = distance;
-      perpendicularX = closestPoint.x; // Store the x-coordinate of the max distance
+      perpendicularX = point.x; // Store the x-coordinate of the max distance
     }
   }
 
   return { maxDistance, perpendicularX };
-}
-
-// Helper function to find the closest point on the polynomial curve for a given x value
-function findClosestPointOnCurve(curve, x) {
-  let closestPoint = null;
-  let minDistance = Infinity;
-
-  for (let point of curve) {
-    let distance = Math.abs(point.x - x);
-    if (distance < minDistance) {
-      minDistance = distance;
-      closestPoint = point;
-    }
-  }
-
-  return closestPoint;
 }
 
 // Function to display text on the chart
@@ -206,7 +192,7 @@ function updateGraph() {
   let rSquared = calculateRSquared(dataPoints, polynomialCurve);
 
   // Find the maximum perpendicular distance and its corresponding x value from the polynomial curve
-  let { maxDistance, perpendicularX } = findMaxPerpendicularDistance(polynomialCurve);
+  let { maxDistance, perpendicularX } = findMaxPerpendicularDistance(polynomialCurve, dataPoints[0], dataPoints[dataPoints.length - 1]);
 
   // Find the closest point on the polynomial curve to the x value where the max perpendicular distance occurred
   let closestPoint = findClosestPointOnCurve(polynomialCurve, perpendicularX);
@@ -224,5 +210,3 @@ function updateGraph() {
   // Finally, update the chart to reflect all changes
   chart.update();
 }
-
-
