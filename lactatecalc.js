@@ -71,8 +71,6 @@ function initializeGraph() {
   });
 }
 
-
-
 // Polynomial Regression (3rd-order)
 function polynomialRegression(points, degree) {
   let xValues = points.map(p => p.x);
@@ -115,7 +113,6 @@ function calculateRSquared(points, polynomialCurve) {
   return 1 - (ssResidual / ssTotal);
 }
 
-// Function to find the max perpendicular distance and its x-coordinate
 // Function to find the max perpendicular distance and its x-coordinate along the polynomial curve
 function findMaxPerpendicularDistance(polynomialCurve) {
   let firstPoint = polynomialCurve[0];
@@ -128,7 +125,7 @@ function findMaxPerpendicularDistance(polynomialCurve) {
   let maxDistance = 0;
   let perpendicularX = null;
 
-  // Iterate over the entire polynomial curve for maximum perpendicular distance
+  // Iterate over the polynomial curve for maximum perpendicular distance
   for (let point of polynomialCurve) {
     let x0 = point.x;
     let y0 = point.y;
@@ -136,6 +133,7 @@ function findMaxPerpendicularDistance(polynomialCurve) {
     // Calculate the perpendicular distance from (x0, y0) to the line y = mx + b
     let distance = Math.abs(slope * x0 - y0 + intercept) / Math.sqrt(slope ** 2 + 1);
 
+    // If the calculated perpendicular distance is greater than the current max distance, update it
     if (distance > maxDistance) {
       maxDistance = distance;
       perpendicularX = x0; // Store the x-coordinate of the max distance
