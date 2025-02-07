@@ -210,20 +210,18 @@ function updateGraph() {
   // Update chart title with R² value
   chart.options.plugins.title.text = `Lactate Threshold Curve (R²: ${rSquared.toFixed(4)})`;
 
-  // Add annotation to display closest point's x and y values
+  // Add annotation to display closest point's x and y values to the right of the graph
   chart.options.plugins.annotation = {
     annotations: {
       closestPointAnnotation: {
         type: 'label',
-        xValue: closestPointOnCurve.x,
+        xValue: chart.scales.x.max * 1.05, // Place annotation to the right of the graph
         yValue: closestPointOnCurve.y,
         backgroundColor: 'rgba(0,0,0,0.8)',
         color: '#ffffff',
         font: {
           size: 12
         },
-        xAdjust: 10, // Adjust horizontal position of the label
-        yAdjust: 0,  // Adjust vertical position of the label
         label: `X: ${closestPointOnCurve.x.toFixed(2)}, Y: ${closestPointOnCurve.y.toFixed(2)}`
       }
     }
@@ -231,5 +229,4 @@ function updateGraph() {
 
   // Finally, update the chart to reflect all changes
   chart.update();
-}
-
+}  
