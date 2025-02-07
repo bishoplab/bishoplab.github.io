@@ -155,10 +155,10 @@ function findClosestPointOnCurve(curve, x) {
 }
 
 // Function to display text on the chart
-function displayTextBelowGraph(perpendicularX) {
+function displayTextBelowGraph(closestPoint) {
   // Create the text element if it doesn't already exist
   let textElement = document.getElementById("loadText");
-  
+
   // If the text element is missing, create and append it
   if (!textElement) {
     textElement = document.createElement("div");
@@ -169,8 +169,8 @@ function displayTextBelowGraph(perpendicularX) {
     document.getElementById('tool-container').appendChild(textElement);
   }
 
-  // Update the text content with the perpendicular X value
-  textElement.innerHTML = `Dmax: ${perpendicularX.toFixed(2)}`;
+  // Update the text content with the closest point's x and y values
+  textElement.innerHTML = `Closest Point: x = ${closestPoint.x.toFixed(2)}, y = ${closestPoint.y.toFixed(2)}`;
 }
 
 function updateGraph() {
@@ -208,6 +208,9 @@ function updateGraph() {
   // Find the maximum perpendicular distance and its corresponding x value from the polynomial curve
   let { maxDistance, perpendicularX } = findMaxPerpendicularDistance(polynomialCurve);
 
+  // Find the closest point on the polynomial curve to the x value where the max perpendicular distance occurred
+  let closestPoint = findClosestPointOnCurve(polynomialCurve, perpendicularX);
+
   // Update the chart with the new data points and polynomial curve
   chart.data.datasets[0].data = dataPoints; // Update black dots dataset
   chart.data.datasets[1].data = polynomialCurve; // Update polynomial curve dataset
@@ -215,10 +218,11 @@ function updateGraph() {
   // Update chart title with R² value
   chart.options.plugins.title.text = `Lactate Threshold Curve (R²: ${rSquared.toFixed(4)})`;
 
-  // Update the text below the chart with the Dmax
-  displayTextBelowGraph(perpendicularX);
+  // Update the text below the chart with the closest point's x and y values
+  displayTextBelowGraph(closestPoint);
 
   // Finally, update the chart to reflect all changes
   chart.update();
 }
+
 
