@@ -199,17 +199,32 @@ function calculateDMax(polynomialCurve) {
   let b = -1;
   let c = intercept;
   
-  // Find the point on the polynomial curve with the maximum distance to the line
+  // Generate a range of x-values to check along the curve
+  let minX = Math.min(x1, x2);
+  let maxX = Math.max(x1, x2);
+  let step = (maxX - minX) / 100; // Generate 100 points between minX and maxX for better resolution
+  
   let maxDistance = 0;
   let dMaxPoint = null;
   
-  for (let point of polynomialCurve) {
-    let distance = pointToLineDistance(point.x, point.y, a, b, c);
+  // Loop through the x-range and calculate the corresponding y-value on the polynomial curve
+  for (let x = minX; x <= maxX; x += step) {
+    let y = 0;
+    
+    // Calculate the y-value using the polynomial equation
+    for (let i = 0; i < polynomialCurve.length; i++) {
+      y += polynomialCurve[i].y * Math.pow(x, polynomialCurve.length - 1 - i);
+    }
+
+    // Calculate the distance from the current point to the line
+    let distance = pointToLineDistance(x, y, a, b, c);
+    
     if (distance > maxDistance) {
       maxDistance = distance;
-      dMaxPoint = point;
+      dMaxPoint = { x: x, y: y };
     }
   }
-  
-  return dMaxPoint; // The point with the maximum distance
+
+  return dMaxPoint; // Return the point with the maximum distance
 }
+
