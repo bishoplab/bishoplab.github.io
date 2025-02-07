@@ -93,7 +93,10 @@ function updateGraph() {
 
   console.log("Data Points:", dataPoints); // Debugging output
 
-  if (dataPoints.length === 0) return;
+  if (dataPoints.length === 0) {
+    console.log("No valid data points entered.");
+    return;
+  }
 
   dataPoints.sort((a, b) => a.x - b.x); // Sort by x-value for the curve fitting
 
@@ -107,13 +110,17 @@ function updateGraph() {
   // Find the closest x-value on the polynomial curve based on input data
   let closestXOnCurve = findClosestXOnCurve(dataPoints, polynomialCurve);
 
-  // Display the closest X value and its corresponding Y on the UI
+  // Display the closest X value and its corresponding Y on the graph as an annotation
   document.getElementById("closest-x-display").innerText = `Closest x on curve: ${closestXOnCurve.x.toFixed(2)}, y = ${closestXOnCurve.y.toFixed(2)}`;
 
-  // Find the max perpendicular distance from the polynomial curve to the line
-  let maxPerpendicular = findMaxPerpendicularDistance(polynomialCurve, dataPoints[0], dataPoints[dataPoints.length - 1]);
-  console.log("Maximum Perpendicular Distance:", maxPerpendicular.maxDistance);
-  console.log("Point with Maximum Perpendicular Distance:", maxPerpendicular.maxPoint);
+  // Add the closest point to the chart to display on the graph
+  chart.data.datasets[2] = {
+    label: 'Closest Point',
+    borderColor: 'blue', // Blue color for the closest point
+    backgroundColor: 'blue',
+    pointRadius: 5,
+    data: [{ x: closestXOnCurve.x, y: closestXOnCurve.y }]
+  };
 
   // Update the chart with data points and polynomial curve
   chart.data.datasets[0].data = [...dataPoints]; // Ensure black dots appear
