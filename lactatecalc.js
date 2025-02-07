@@ -195,7 +195,7 @@ function updateGraph() {
   let { maxDistance, perpendicularX } = findMaxPerpendicularDistance(polynomialCurve, dataPoints[0], dataPoints[dataPoints.length - 1]);
 
   // Find the closest point on the polynomial curve to the x value where the max perpendicular distance occurred
-  let closestPoint = findClosestPointOnCurve(polynomialCurve, perpendicularX);
+  let closestPoint = polynomialCurve.find(point => point.x === perpendicularX);
 
   // Update the chart with the new data points and polynomial curve
   chart.data.datasets[0].data = dataPoints; // Update black dots dataset
@@ -209,4 +209,6 @@ function updateGraph() {
 
   // Finally, update the chart to reflect all changes
   chart.update();
+  chart.reset();  // Force re-render
 }
+
