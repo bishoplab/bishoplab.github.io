@@ -8,6 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/9.4.3/math.js"></script>
+
   <link rel="stylesheet" href="styles.css">
 
   <style>
@@ -29,6 +30,13 @@
       font-size: 18px;
       padding-left: 10px;
       top: 80px;
+      margin-top: 0;
+    }
+    
+    .sidebar h2 {
+      margin-top: 0;
+      margin-bottom: 5px;
+      padding-bottom: 5px;
     }
     
     .sidebar a {
@@ -36,6 +44,7 @@
       color: #000;
       padding: 5px 5px;
       text-decoration: none;
+      margin-bottom: 5px;
       font-weight: bold;
     }
     
@@ -48,7 +57,7 @@
       background-color: #82e781;
       color: white;
       text-align: left;
-      padding: 15px;
+      padding: 15px 15px;
       font-size: 40px;
       font-weight: bold;
       position: fixed;
@@ -65,19 +74,46 @@
       margin-top: 70px;
     }
 
-    .graph-container {
-      width: 400px;
-      height: 400px;
+    .icon-small a img {
+      width: 20px;
+      height: 20px;
+      transition: transform 0.3s ease;
+      gap: 5px;
     }
 
+    .icon-small a:hover img {
+      transform: scale(1.25);
+    }
+
+    h2 {
+      margin-bottom: 5px;
+    }
+
+    h3 {
+      font-size: 18px;
+    }
+
+    div {
+      margin-bottom: 0px;
+    }
+
+    .graph-container {
+      width: 400px;  /* Set your desired width */
+      height: 400px; /* Set your desired height */
+    }
+
+    /* Hide the tool container initially */
     .tool-container {
       display: none;
     }
+
   </style>
 </head>
 <body>
 
-  <div class="header">Bishop Lab Group</div>
+  <div class="header">
+    Bishop Lab Group
+  </div>
 
   <div class="sidebar">
     <a href="index.html">Team</a>
@@ -87,11 +123,14 @@
     <a href="tools.html">Tools</a>
   </div>
 
-  <div class="content">
+ <div class="content">
     <h2>Tool List</h2>
-    <button class="tool-button" id="toggleButton">Lactate Threshold Calculator</button>
+
+    <button class="tool-button" onclick="toggleTool()">Lactate Threshold Calculator</button>
 
     <div class="tool-container" id="tool-container">
+      
+      <!-- Table for input -->
       <div class="table-container">
         <table id="data-table">
           <thead>
@@ -101,31 +140,47 @@
             </tr>
           </thead>
           <tbody>
+            <!-- Rows added dynamically -->
           </tbody>
         </table>
+
         <div class="buttons">
           <button onclick="addRow()">Add Row</button>
         </div>
       </div>
 
+      <!-- Graph Container -->
       <div class="graph-container">
         <canvas id="lactateChart"></canvas>
       </div>
-    </div>
 
-    <div id="threshold-values">
-      <p id="lactate-threshold-value"></p>
-      <p id="dmax-value"></p>
-      <p id="modified-dmax-value"></p>
     </div>
   </div>
 
   <script>
-    document.getElementById("toggleButton").addEventListener("click", function () {
-      let toolContainer = document.getElementById("tool-container");
-      toolContainer.style.display = (toolContainer.style.display === "none" || toolContainer.style.display === "") ? "block" : "none";
-    });
+    // Function to toggle the visibility of the tool container
+    function toggleTool() {
+      var toolContainer = document.getElementById('tool-container');
+      if (toolContainer.style.display === 'none' || toolContainer.style.display === '') {
+        toolContainer.style.display = 'block';
+      } else {
+        toolContainer.style.display = 'none';
+      }
+    }
+
+    // Sample function to add a row dynamically
+    function addRow() {
+      var table = document.getElementById("data-table").getElementsByTagName('tbody')[0];
+      var newRow = table.insertRow(table.rows.length);
+      newRow.innerHTML = `
+        <td><input type="number" name="load" placeholder="Load"></td>
+        <td><input type="number" name="lactate" placeholder="Lactate concentration"></td>
+      `;
+    }
   </script>
+
   <script src="lactatecalc.js"></script>
+
 </body>
 </html>
+
