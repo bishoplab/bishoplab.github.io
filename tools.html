@@ -1,166 +1,229 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bishop Lab Group</title>
-  
-  <link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;700&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/9.4.3/math.js"></script>
-
-  <link rel="stylesheet" href="styles.css">
-
-  <style>
-    body {
-      font-family: 'Jost', sans-serif;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      flex-direction: row;
-    }
-
-    .sidebar {
-      width: 115px;
-      background-color: #f4f4f4;
-      padding-top: 10px;
-      position: fixed;
-      height: 100%;
-      overflow-y: auto;
-      font-size: 18px;
-      padding-left: 10px;
-      top: 80px;
-      margin-top: 0;
-    }
-    
-    .sidebar h2 {
-      margin-top: 0;
-      margin-bottom: 5px;
-      padding-bottom: 5px;
-    }
-    
-    .sidebar a {
-      display: block;
-      color: #000;
-      padding: 5px 5px;
-      text-decoration: none;
-      margin-bottom: 5px;
-      font-weight: bold;
-    }
-    
-    .sidebar a:hover {
-      background-color: #ddd;
-    }
-
-    .header {
-      width: 100%;
-      background-color: #82e781;
-      color: white;
-      text-align: left;
-      padding: 15px 15px;
-      font-size: 40px;
-      font-weight: bold;
-      position: fixed;
-      top: 0;
-      left: 0;
-      z-index: 1;
-      height: 60px;
-    }
-
-    .content {
-      margin-left: 130px;
-      padding: 10px;
-      flex-grow: 1;
-      margin-top: 70px;
-    }
-
-    .icon-small a img {
-      width: 20px;
-      height: 20px;
-      transition: transform 0.3s ease;
-      gap: 5px;
-    }
-
-    .icon-small a:hover img {
-      transform: scale(1.25);
-    }
-
-    h2 {
-      margin-bottom: 5px;
-    }
-
-    h3 {
-      font-size: 18px;
-    }
-
-    div {
-      margin-bottom: 0px;
-    }
-
-    .graph-container {
-      width: 400px;  /* Set your desired width */
-      height: 400px; /* Set your desired height */
-    }
-
-    /* Hide the tool container initially */
-    .tool-container {
-      display: none;
-    }
-
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lactate Threshold Analysis</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/10.6.4/math.min.js"></script>
 </head>
 <body>
-
-  <div class="header">
-    Bishop Lab Group
-  </div>
-
-  <div class="sidebar">
-    <a href="index.html">Team</a>
-    <a href="projects.html">Projects</a>
-    <a href="publications.html">Publications</a>
-    <a href="resources.html">Resources</a>
-    <a href="tools.html">Tools</a>
-  </div>
-
- <div class="content">
-    <h2>Tool List</h2>
-
-    <button class="tool-button" onclick="toggleTool()">Lactate Threshold Calculator</button>
-
-    <div class="tool-container" id="tool-container" style="display: none;">
-      
-      <!-- Table for input -->
-      <div class="table-container">
-        <table id="data-table">
-          <thead>
-            <tr>
-              <th>Load</th>
-              <th>Lactate conc.</th>
-            </tr>
-          </thead>
-          <tbody>
-            <!-- Rows added dynamically -->
-          </tbody>
+    <button onclick="toggleTool()">Toggle Tool</button>
+    
+    <div id="tool-container" style="display: none; flex-direction: column;">
+        <table id="data-table" border="1">
+            <thead>
+                <tr>
+                    <th>Load</th>
+                    <th>Lactate Concentration</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
         </table>
-
-        <div class="buttons">
-          <button onclick="addRow()">Add Row</button>
-        </div>
-      </div>
-
-      <!-- Graph Container -->
-      <div class="graph-container">
-        <canvas id="lactateChart"></canvas>
-      </div>
-
+        <button onclick="addRow()">Add Row</button>
+        <button onclick="updateGraph()">Update Graph</button>
+        
+        <canvas id="lactateChart" width="400" height="400"></canvas>
+        <div id="dmax-display"></div>
     </div>
-  </div>
-  
-  <p id="closest-x-display"></p>
 
-  <script src="lactatecalc.js"></script>
+    <script>
+        let chart = null;
 
+        function toggleTool() {
+            let toolContainer = document.getElementById('tool-container');
+            let isHidden = (toolContainer.style.display === 'none' || toolContainer.style.display === '');
+            
+            toolContainer.style.display = isHidden ? 'flex' : 'none';
+
+            if (isHidden && !chart) {
+                initializeGraph();
+            }
+
+            if (isHidden && document.getElementById("data-table").getElementsByTagName('tbody')[0].children.length === 0) {
+                addRow();
+            }
+        }
+
+        function addRow() {
+            let table = document.getElementById("data-table").getElementsByTagName('tbody')[0];
+            let newRow = table.insertRow();
+            let cell1 = newRow.insertCell(0);
+            let cell2 = newRow.insertCell(1);
+            
+            cell1.innerHTML = '<input type="number" step="any" oninput="updateGraph()">'; 
+            cell2.innerHTML = '<input type="number" step="any" oninput="updateGraph()">'; 
+        }
+
+        function initializeGraph() {
+            let ctx = document.getElementById('lactateChart').getContext('2d');
+
+            chart = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [
+                        {
+                            label: 'Data Points',
+                            borderColor: 'transparent',
+                            backgroundColor: 'black',
+                            pointRadius: 5,
+                            data: []
+                        },
+                        {
+                            label: 'Polynomial Fit',
+                            borderColor: 'red',
+                            backgroundColor: 'transparent',
+                            fill: false,
+                            showLine: true,
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            data: []
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: true },
+                        title: {
+                            display: true,
+                            text: 'Lactate Threshold Curve (R²: )',
+                            font: { size: 16 }
+                        }
+                    },
+                    scales: {
+                        x: { title: { display: true, text: 'Load' }, min: 0 },
+                        y: { title: { display: true, text: 'Lactate Concentration' }, min: 0 }
+                    }
+                }
+            });
+        }
+
+        function updateGraph() {
+            if (!chart) return;
+
+            let table = document.getElementById("data-table").getElementsByTagName('tbody')[0];
+            let rows = table.getElementsByTagName('tr');
+
+            let dataPoints = [];
+
+            for (let row of rows) {
+                let inputs = row.getElementsByTagName('input');
+                let x = parseFloat(inputs[0].value);
+                let y = parseFloat(inputs[1].value);
+
+                if (!isNaN(x) && !isNaN(y)) {
+                    dataPoints.push({ x, y });
+                }
+            }
+
+            if (dataPoints.length === 0) {
+                console.warn("No valid data points entered.");
+                return;
+            }
+
+            dataPoints.sort((a, b) => a.x - b.x);
+
+            let coefficients = polynomialRegression(dataPoints, 3);
+            let polynomialCurve = generatePolynomialCurve(coefficients, dataPoints);
+
+            let rSquared = calculateRSquared(dataPoints, polynomialCurve);
+
+            let peakLactatePoint = polynomialCurve.reduce((maxPoint, currentPoint) => {
+                return currentPoint.y > maxPoint.y ? currentPoint : maxPoint;
+            }, polynomialCurve[0]);
+
+            let restingLevel = dataPoints[0].y;
+            let threshold = restingLevel + 0.4;
+            let thresholdPoint = dataPoints.find(p => p.y >= threshold);
+
+            if (!thresholdPoint) {
+                console.error('No lactate point found above 0.4 mmol/L over resting level.');
+                return;
+            }
+
+            let { maxDistance, maxPoint } = findMaxPerpendicularDistance(polynomialCurve, peakLactatePoint, thresholdPoint);
+
+            document.getElementById("dmax-display").innerText = `Dmax Point: x = ${maxPoint.x.toFixed(2)}, y = ${maxPoint.y.toFixed(2)}`;
+
+            chart.data.datasets[0].data = [...dataPoints];
+            chart.data.datasets[1].data = [...polynomialCurve];
+
+            chart.options.plugins.title.text = `Lactate Threshold Curve (R²: ${rSquared.toFixed(4)})`;
+
+            let dmaxDataset = chart.data.datasets.find(dataset => dataset.label === 'Dmax Point');
+            if (dmaxDataset) {
+                dmaxDataset.data = [{ x: maxPoint.x, y: maxPoint.y }];
+            } else {
+                chart.data.datasets.push({
+                    label: 'Dmax Point',
+                    borderColor: 'blue',
+                    backgroundColor: 'blue',
+                    pointRadius: 5,
+                    data: [{ x: maxPoint.x, y: maxPoint.y }]
+                });
+            }
+
+            chart.update();
+        }
+
+        function findMaxPerpendicularDistance(polyCurve, lineStart, lineEnd) {
+            let m = (lineEnd.y - lineStart.y) / (lineEnd.x - lineStart.x);
+            let b = lineStart.y - m * lineStart.x;
+
+            let maxDistance = -Infinity;
+            let maxPoint = null;
+
+            for (let point of polyCurve) {
+                let distance = Math.abs(m * point.x - point.y + b) / Math.sqrt(m * m + 1);
+                if (distance > maxDistance) {
+                    maxDistance = distance;
+                    maxPoint = point;
+                }
+            }
+
+            return { maxDistance, maxPoint };
+        }
+
+        function polynomialRegression(dataPoints, degree) {
+            let xValues = dataPoints.map(p => p.x);
+            let yValues = dataPoints.map(p => p.y);
+
+            let X = [];
+            for (let i = 0; i <= degree; i++) {
+                X.push(xValues.map(x => Math.pow(x, i)));
+            }
+
+            let XT = math.transpose(X);
+            let XTX = math.multiply(XT, X);
+            let XTX_inv = math.inv(XTX);
+            let XTY = math.multiply(XT, yValues);
+
+            return math.multiply(XTX_inv, XTY);
+        }
+
+        function generatePolynomialCurve(coefficients, dataPoints) {
+            let minX = dataPoints[0].x;
+            let maxX = dataPoints[dataPoints.length - 1].x;
+
+            let step = (maxX - minX) / 50;
+            let curve = [];
+
+            for (let x = minX; x <= maxX; x += step) {
+                let y = coefficients.reduce((sum, coeff, idx) => sum + coeff * Math.pow(x, idx), 0);
+                curve.push({ x, y });
+            }
+
+            return curve;
+        }
+
+        function calculateRSquared(actual, predicted) {
+            let meanY = actual.reduce((sum, p) => sum + p.y, 0) / actual.length;
+            let ssTot = actual.reduce((sum, p) => sum + Math.pow(p.y - meanY, 2), 0);
+            let ssRes = actual.reduce((sum, p, i) => sum + Math.pow(p.y - predicted[i].y, 2), 0);
+            return 1 - (ssRes / ssTot);
+        }
+    </script>
 </body>
 </html>
-
