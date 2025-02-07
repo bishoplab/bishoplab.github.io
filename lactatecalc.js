@@ -166,6 +166,9 @@ function displayTextBelowGraph(point) {
   }
 
   textContainer.innerHTML = `Closest point on curve: X = ${point.x.toFixed(2)}, Y = ${point.y.toFixed(2)}`;
+  textContainer.style.position = "absolute";
+  textContainer.style.top = (chart.canvas.height + 20) + "px"; // Place below the graph
+  textContainer.style.left = "10px"; // Adjust position horizontally
 }
 
 function updateGraph() {
@@ -210,23 +213,10 @@ function updateGraph() {
   // Update chart title with R² value
   chart.options.plugins.title.text = `Lactate Threshold Curve (R²: ${rSquared.toFixed(4)})`;
 
-  // Add annotation to display closest point's x and y values to the right of the graph
-  chart.options.plugins.annotation = {
-    annotations: {
-      closestPointAnnotation: {
-        type: 'label',
-        xValue: chart.scales.x.max * 1.05, // Place annotation to the right of the graph
-        yValue: closestPointOnCurve.y,
-        backgroundColor: 'rgba(0,0,0,0.8)',
-        color: '#ffffff',
-        font: {
-          size: 12
-        },
-        label: `X: ${closestPointOnCurve.x.toFixed(2)}, Y: ${closestPointOnCurve.y.toFixed(2)}`
-      }
-    }
-  };
+  // Display the closest point below the graph
+  displayTextBelowGraph(closestPointOnCurve);
 
   // Finally, update the chart to reflect all changes
   chart.update();
 }
+
