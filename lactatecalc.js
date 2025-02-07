@@ -91,76 +91,71 @@ function updateGraph() {
     }
   }
 
-  if (dataPoints.length < 2) return; // Ensure we have at least two points
+  if (dataPoints.length === 0) return;
 
-  dataPoints.sort((a, b) => a.x - b.x); // Sort by x-value for curve fitting
+  dataPoints.sort((a, b) => a.x - b.x); // Sort by x-value
 
-  // Get first and last points (lowest and highest Load values)
-  let firstPoint = dataPoints[0];
-  let lastPoint = dataPoints[dataPoints.length - 1];
-
-  // Compute polynomial regression (3rd-order)
+  // Perform polynomial regression (3rd-order)
   let coefficients = polynomialRegression(dataPoints, 3);
   let polynomialCurve = generatePolynomialCurve(coefficients, dataPoints);
 
   // Calculate R² value
   let rSquared = calculateRSquared(dataPoints, polynomialCurve);
 
-  // Find max perpendicular distance and intersection point
-  let maxPerpendicularPoint = findMaxPerpendicularDistance(firstPoint, lastPoint, polynomialCurve);
+  // Find the perpendicular distance and its x-value
+  let { maxDistance, perpendicularX } = findMaxPerpendicularDistance(dataPoints, polynomialCurve);
 
-  // Update chart with data points, polynomial curve, and annotation
-  chart.data.datasets[0].data = [...dataPoints]; // Data points
-  chart.data.datasets[1].data = [...polynomialCurve]; // Polynomial curve
+  // Update chart with data points and polynomial curve
+  chart.data.datasets[0].data = [...dataPoints]; // Black dots
+  chart.data.datasets[1].data = [...polynomialCurve]; // Red polynomial line
 
-  // Update the title with the R² value
+  // Update the title with R² value
   chart.options.plugins.title.text = `Lactate Threshold Curve (R²: ${rSquared.toFixed(4)})`;
 
-  // Add text annotation for the Load value at max perpendicular distance
-  chart.options.plugins.annotation = {
-    annotations: [
-      {
-        type: 'label',
-        xValue: maxPerpendicularPoint.x,
-        yValue: maxPerpendicularPoint.y,
-        backgroundColor: 'rgba(255,0,0,0.7)',
-        content: `Load: ${maxPerpendicularPoint.x.toFixed(2)}`,
-        font: { size: 14 },
-        position: 'top'
-      }
-    ]
-  };
+  // Ensure text displays on the chart
+  displayTextOnChart(perpendicularX, maxDistance);
 
   chart.update();
 }
 
-// Function to find max perpendicular distance between the polynomial and the linear line
-function findMaxPerpendicularDistance(firstPoint, lastPoint, polynomialCurve) {
-  let x1 = firstPoint.x, y1 = firstPoint.y;
-  let x2 = lastPoint.x, y2 = lastPoint.y;
+// Function to find the max perpendicular distance and its x-coordinate
+function findMaxPerpendicularDistance(dataPoints, polynomialCurve) {
+  let firstPoint = dataPoints[0];
+  let lastPoint = dataPoints[dataPoints.length - 1];
 
-  // Compute line equation y = mx + b
-  let m = (y2 - y1) / (x2 - x1);
-  let b = y1 - m * x1;
+  // Equation of the linear line y = mx + b
+  let slope = (lastPoint.y - firstPoint.y) / (lastPoint.x - firstPoint.x);
+  let intercept = firstPoint.y - slope * firstPoint.x;
 
   let maxDistance = 0;
-  let maxPoint = null;
+  let perpendicularX = null;
 
   for (let point of polynomialCurve) {
     let x0 = point.x;
     let y0 = point.y;
 
-    // Perpendicular distance formula
-    let distance = Math.abs(m * x0 - y0 + b) / Math.sqrt(m * m + 1);
+    // Distance formula from point (x0, y0) to the line y = mx + b
+    let distance = Math.abs(slope * x0 - y0 + intercept) / Math.sqrt(slope ** 2 + 1);
 
     if (distance > maxDistance) {
       maxDistance = distance;
-      maxPoint = { x: x0, y: y0 };
+      perpendicularX = x0;
     }
   }
 
-  return maxPoint;
+  return { maxDistance, perpendicularX };
 }
+
+// Function to display text on the chart
+function displayTextOnChart(xValue, maxDistance) {
+  let ctx = chart.ctx;
+  ctx.save();
+  ctx.font = "14px Arial";
+  ctx.fillStyle = "blue";
+  ctx.fillText(`Max Perpendicular X: ${xValue.toFixed(2)}`, 50, 50);
+  ctx.restore();
+}
+
 
 // Polynomial Regression (3rd-order)
 function polynomialRegression(points, degree) {
