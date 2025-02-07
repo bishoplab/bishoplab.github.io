@@ -113,10 +113,11 @@ function calculateRSquared(points, polynomialCurve) {
   return 1 - (ssResidual / ssTotal);
 }
 
+// Update the findMaxPerpendicularDistance function to return the closest point on the full polynomial curve
 function findMaxPerpendicularDistance(polynomialCurve, firstPoint, lastPoint) {
   let maxDistance = 0;
   let perpendicularX = null;
-  
+
   // Calculate slope and intercept for the line connecting the first and last data points
   let slope = (lastPoint.y - firstPoint.y) / (lastPoint.x - firstPoint.x);
   let intercept = firstPoint.y - (slope * firstPoint.x);
@@ -137,26 +138,34 @@ function findMaxPerpendicularDistance(polynomialCurve, firstPoint, lastPoint) {
     }
   }
 
-  return { maxDistance, perpendicularX };
+  // Find the corresponding y-value on the polynomial curve by evaluating the polynomial at perpendicularX
+  let closestPointOnCurve = {
+    x: perpendicularX,
+    y: evaluatePolynomialAtX(polynomialCurve, perpendicularX)
+  };
+
+  return closestPointOnCurve;
 }
 
-// Function to display text on the chart
-function displayTextBelowGraph(closestPoint) {
-  // Create the text element if it doesn't already exist
-  let textElement = document.getElementById("loadText");
+// Function to evaluate the polynomial at a given x-value using the coefficients
+function evaluatePolynomialAtX(coefficients, x) {
+  let y = 0;
+  for (let i = 0; i < coefficients.length; i++) {
+    y += coefficients[i] * Math.pow(x, coefficients.length - 1 - i);
+  }
+  return y;
+}
 
-  // If the text element is missing, create and append it
-  if (!textElement) {
-    textElement = document.createElement("div");
-    textElement.id = "loadText";
-    textElement.style.marginTop = "20px"; // Space below the chart
-    textElement.style.fontSize = "14px"; // Adjust font size as needed
-    textElement.style.color = "#333"; // Text color
-    document.getElementById('tool-container').appendChild(textElement);
+function displayTextBelowGraph(point) {
+  let textContainer = document.getElementById("closest-point-text");
+
+  if (!textContainer) {
+    textContainer = document.createElement("div");
+    textContainer.id = "closest-point-text";
+    document.body.appendChild(textContainer);
   }
 
-  // Update the text content with the closest point's x and y values
-  textElement.innerHTML = `Closest Point: x = ${closestPoint.x.toFixed(2)}, y = ${closestPoint.y.toFixed(2)}`;
+  textContainer.innerHTML = `Closest point on curve: X = ${point.x.toFixed(2)}, Y = ${point.y.toFixed(2)}`;
 }
 
 function updateGraph() {
@@ -191,11 +200,8 @@ function updateGraph() {
   // Calculate R² value for the regression
   let rSquared = calculateRSquared(dataPoints, polynomialCurve);
 
-  // Find the maximum perpendicular distance and its corresponding x value from the polynomial curve
-  let { maxDistance, perpendicularX } = findMaxPerpendicularDistance(polynomialCurve, dataPoints[0], dataPoints[dataPoints.length - 1]);
-
-  // Find the closest point on the polynomial curve to the x value where the max perpendicular distance occurred
-  let closestPoint = polynomialCurve.find(point => point.x === perpendicularX);
+  // Find the maximum perpendicular distance and its corresponding point on the polynomial curve
+  let closestPointOnCurve = findMaxPerpendicularDistance(polynomialCurve, dataPoints[0], dataPoints[dataPoints.length - 1]);
 
   // Update the chart with the new data points and polynomial curve
   chart.data.datasets[0].data = dataPoints; // Update black dots dataset
@@ -205,10 +211,9 @@ function updateGraph() {
   chart.options.plugins.title.text = `Lactate Threshold Curve (R²: ${rSquared.toFixed(4)})`;
 
   // Update the text below the chart with the closest point's x and y values
-  displayTextBelowGraph(closestPoint);
+  displayTextBelowGraph(closestPointOnCurve);
 
   // Finally, update the chart to reflect all changes
   chart.update();
-  chart.reset();  // Force re-render
 }
 
