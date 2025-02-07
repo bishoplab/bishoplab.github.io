@@ -229,4 +229,4 @@ function updateGraph() {
 
   // Finally, update the chart to reflect all changes
   chart.update();
-}  
+}
