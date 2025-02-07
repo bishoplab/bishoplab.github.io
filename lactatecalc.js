@@ -72,52 +72,7 @@ function initializeGraph() {
 }
 
 
-// Function to find the max perpendicular distance and its x-coordinate
-function findMaxPerpendicularDistance(dataPoints, polynomialCurve) {
-  let firstPoint = dataPoints[0];
-  let lastPoint = dataPoints[dataPoints.length - 1];
 
-  // Equation of the linear line y = mx + b
-  let slope = (lastPoint.y - firstPoint.y) / (lastPoint.x - firstPoint.x);
-  let intercept = firstPoint.y - slope * firstPoint.x;
-
-  let maxDistance = 0;
-  let perpendicularX = null;
-
-  for (let point of polynomialCurve) {
-    let x0 = point.x;
-    let y0 = point.y;
-
-    // Distance formula from point (x0, y0) to the line y = mx + b
-    let distance = Math.abs(slope * x0 - y0 + intercept) / Math.sqrt(slope ** 2 + 1);
-
-    if (distance > maxDistance) {
-      maxDistance = distance;
-      perpendicularX = x0;
-    }
-  }
-
-  return { maxDistance, perpendicularX };
-}
-
-// Function to display text on the chart
-function displayTextBelowGraph(perpendicularX) {
-  // Create the text element if it doesn't already exist
-  let textElement = document.getElementById("loadText");
-  
-  // If the text element is missing, create and append it
-  if (!textElement) {
-    textElement = document.createElement("div");
-    textElement.id = "loadText";
-    textElement.style.marginTop = "20px"; // Space below the chart
-    textElement.style.fontSize = "14px"; // Adjust font size as needed
-    textElement.style.color = "#333"; // Text color
-    document.getElementById('tool-container').appendChild(textElement);
-  }
-
-  // Update the text content with the perpendicular X value
-  textElement.innerHTML = `Max Perpendicular Distance Load: ${perpendicularX.toFixed(2)} units`;
-}
 // Polynomial Regression (3rd-order)
 function polynomialRegression(points, degree) {
   let xValues = points.map(p => p.x);
@@ -158,6 +113,54 @@ function calculateRSquared(points, polynomialCurve) {
   let ssTotal = points.reduce((sum, p) => sum + Math.pow(p.y - meanY, 2), 0);
   let ssResidual = points.reduce((sum, p, i) => sum + Math.pow(p.y - polynomialCurve[i].y, 2), 0);
   return 1 - (ssResidual / ssTotal);
+}
+
+// Function to find the max perpendicular distance and its x-coordinate
+function findMaxPerpendicularDistance(dataPoints, polynomialCurve) {
+  let firstPoint = dataPoints[0];
+  let lastPoint = dataPoints[dataPoints.length - 1];
+
+  // Equation of the linear line y = mx + b
+  let slope = (lastPoint.y - firstPoint.y) / (lastPoint.x - firstPoint.x);
+  let intercept = firstPoint.y - slope * firstPoint.x;
+
+  let maxDistance = 0;
+  let perpendicularX = null;
+
+  // Iterate over the entire polynomial curve for maximum distance
+  for (let point of polynomialCurve) {
+    let x0 = point.x;
+    let y0 = point.y;
+
+    // Distance formula from point (x0, y0) to the line y = mx + b
+    let distance = Math.abs(slope * x0 - y0 + intercept) / Math.sqrt(slope ** 2 + 1);
+
+    if (distance > maxDistance) {
+      maxDistance = distance;
+      perpendicularX = x0;
+    }
+  }
+
+  return { maxDistance, perpendicularX };
+}
+
+// Function to display text on the chart
+function displayTextBelowGraph(perpendicularX) {
+  // Create the text element if it doesn't already exist
+  let textElement = document.getElementById("loadText");
+  
+  // If the text element is missing, create and append it
+  if (!textElement) {
+    textElement = document.createElement("div");
+    textElement.id = "loadText";
+    textElement.style.marginTop = "20px"; // Space below the chart
+    textElement.style.fontSize = "14px"; // Adjust font size as needed
+    textElement.style.color = "#333"; // Text color
+    document.getElementById('tool-container').appendChild(textElement);
+  }
+
+  // Update the text content with the perpendicular X value
+  textElement.innerHTML = `Dmax: ${perpendicularX.toFixed(2)}`;
 }
 
 function updateGraph() {
