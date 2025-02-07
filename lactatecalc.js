@@ -74,7 +74,6 @@ function initializeGraph() {
 }
 
 
-// Add D-max to the updateGraph function
 function updateGraph() {
   if (!chart) return;
 
@@ -106,32 +105,40 @@ function updateGraph() {
   // Calculate R² value
   let rSquared = calculateRSquared(dataPoints, polynomialCurve);
 
-  // Calculate D-max
-  let dMaxPoint = calculateDMax(polynomialCurve, dataPoints);
-  console.log("D-max Point:", dMaxPoint);
+  // Find the closest x-value on the polynomial curve based on input data
+  let closestXOnCurve = findClosestXOnCurve(dataPoints, polynomialCurve);
 
-  // Display the D-max point in the UI
-  document.getElementById("dmax-display").innerText = D-max Point: x = ${dMaxPoint.x.toFixed(2)}, y = ${dMaxPoint.y.toFixed(2)};
+  // Display the closest X value and its corresponding Y on the UI
+  document.getElementById("closest-x-display").innerText = `Closest x on curve: ${closestXOnCurve.x.toFixed(2)}, y = ${closestXOnCurve.y.toFixed(2)}`;
 
-  // Add D-max point to the chart data
-  chart.data.datasets[2] = {
-    label: 'D-max Point',
-    borderColor: 'blue',
-    backgroundColor: 'blue',
-    pointRadius: 8,
-    data: [dMaxPoint]  // Add the D-max point as a single point
-  };
-
-  // Update chart with data points and polynomial curve
+  // Update the chart with data points and polynomial curve
   chart.data.datasets[0].data = [...dataPoints]; // Ensure black dots appear
   chart.data.datasets[1].data = [...polynomialCurve]; // Red polynomial line (smooth)
 
   // Update the title with the R² value
-  chart.options.plugins.title.text = Lactate Threshold Curve (R²: ${rSquared.toFixed(4)});
+  chart.options.plugins.title.text = `Lactate Threshold Curve (R²: ${rSquared.toFixed(4)})`;
 
   chart.update();
 }
 
+// Function to find the closest x-value on the polynomial curve
+function findClosestXOnCurve(dataPoints, polynomialCurve) {
+  let closestPoint = null;
+  let minDistance = Infinity;
+
+  for (let dataPoint of dataPoints) {
+    for (let curvePoint of polynomialCurve) {
+      // Calculate the distance between the data point and the curve point
+      let distance = Math.abs(dataPoint.x - curvePoint.x);
+      if (distance < minDistance) {
+        minDistance = distance;
+        closestPoint = curvePoint;
+      }
+    }
+  }
+
+  return closestPoint; // Return the closest point on the curve
+}
 
 // Polynomial Regression (3rd-order)
 function polynomialRegression(points, degree) {
