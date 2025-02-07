@@ -73,44 +73,6 @@ function initializeGraph() {
   });
 }
 
-// Function to calculate the distance of a point (x, y) from a line ax + by + c = 0
-function pointToLineDistance(x, y, a, b, c) {
-  return Math.abs(a * x + b * y + c) / Math.sqrt(a * a + b * b);
-}
-
-// Function to calculate the D-max
-function calculateDMax(polynomialCurve) {
-  // Get the first and last points of the polynomial curve
-  let firstPoint = polynomialCurve[0];
-  let lastPoint = polynomialCurve[polynomialCurve.length - 1];
-  
-  // Calculate the line equation from the first and last points
-  let x1 = firstPoint.x, y1 = firstPoint.y;
-  let x2 = lastPoint.x, y2 = lastPoint.y;
-  
-  // Slope of the line
-  let slope = (y2 - y1) / (x2 - x1);
-  let intercept = y1 - slope * x1;
-  
-  // Line equation: y = slope * x + intercept --> Rewritten as slope * x - y + intercept = 0
-  let a = slope;
-  let b = -1;
-  let c = intercept;
-  
-  // Find the point on the polynomial curve with the maximum distance to the line
-  let maxDistance = 0;
-  let dMaxPoint = null;
-  
-  for (let point of polynomialCurve) {
-    let distance = pointToLineDistance(point.x, point.y, a, b, c);
-    if (distance > maxDistance) {
-      maxDistance = distance;
-      dMaxPoint = point;
-    }
-  }
-  
-  return dMaxPoint; // The point with the maximum distance
-}
 
 // Add D-max to the updateGraph function
 function updateGraph() {
@@ -212,3 +174,41 @@ function calculateRSquared(points, polynomialCurve) {
   return 1 - (ssResidual / ssTotal);
 }
 
+// Function to calculate the distance of a point (x, y) from a line ax + by + c = 0
+function pointToLineDistance(x, y, a, b, c) {
+  return Math.abs(a * x + b * y + c) / Math.sqrt(a * a + b * b);
+}
+
+// Function to calculate the D-max
+function calculateDMax(polynomialCurve) {
+  // Get the first and last points of the polynomial curve
+  let firstPoint = polynomialCurve[0];
+  let lastPoint = polynomialCurve[polynomialCurve.length - 1];
+  
+  // Calculate the line equation from the first and last points
+  let x1 = firstPoint.x, y1 = firstPoint.y;
+  let x2 = lastPoint.x, y2 = lastPoint.y;
+  
+  // Slope of the line
+  let slope = (y2 - y1) / (x2 - x1);
+  let intercept = y1 - slope * x1;
+  
+  // Line equation: y = slope * x + intercept --> Rewritten as slope * x - y + intercept = 0
+  let a = slope;
+  let b = -1;
+  let c = intercept;
+  
+  // Find the point on the polynomial curve with the maximum distance to the line
+  let maxDistance = 0;
+  let dMaxPoint = null;
+  
+  for (let point of polynomialCurve) {
+    let distance = pointToLineDistance(point.x, point.y, a, b, c);
+    if (distance > maxDistance) {
+      maxDistance = distance;
+      dMaxPoint = point;
+    }
+  }
+  
+  return dMaxPoint; // The point with the maximum distance
+}
