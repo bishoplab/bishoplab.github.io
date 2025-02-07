@@ -86,36 +86,24 @@ function updateGraph() {
 
   let dataPoints = [];
 
-  // Gather data points from the table and filter out unrealistic values
   for (let row of rows) {
     let inputs = row.getElementsByTagName('input');
     let x = parseFloat(inputs[0].value);
     let y = parseFloat(inputs[1].value);
 
-    if (!isNaN(x) && !isNaN(y) && y <= 12) {  // Set a cap to filter extreme values (e.g., y <= 12)
+    if (!isNaN(x) && !isNaN(y)) {
       dataPoints.push({ x, y });
     }
   }
 
   dataPoints.sort((a, b) => a.x - b.x); // Sort by x-value for the curve fitting
 
-  if (dataPoints.length < 2) return; // Ensure at least two points for fitting
-
-  // Normalize the y-values before fitting to prevent large values from causing issues
-  let maxY = Math.max(...dataPoints.map(p => p.y));
-  let minY = Math.min(...dataPoints.map(p => p.y));
-  let rangeY = maxY - minY;
-  let normalizedDataPoints = dataPoints.map(p => ({
-    x: p.x,
-    y: (p.y - minY) / rangeY  // Normalize y-values between 0 and 1
-  }));
-
   // Polynomial regression (3rd-order) to fit a curve
-  let coefficients = polynomialRegression(normalizedDataPoints, 3);
-  let polynomialCurve = generatePolynomialCurve(coefficients, normalizedDataPoints);
+  let coefficients = polynomialRegression(dataPoints, 3);
+  let polynomialCurve = generatePolynomialCurve(coefficients, dataPoints);
 
   // Calculate R² value
-  let rSquared = calculateRSquared(normalizedDataPoints, polynomialCurve);
+  let rSquared = calculateRSquared(dataPoints, polynomialCurve);
 
   // Update chart with data points and polynomial curve
   chart.data.datasets[0].data = dataPoints; // Add data points
@@ -129,7 +117,7 @@ function updateGraph() {
   document.getElementById('lactate-threshold-value').textContent = Lactate Threshold: Load = ${lactateThreshold.toFixed(2)};
 
   // Calculate DMAX
-  let dmax = calculateDMAX(coefficients, normalizedDataPoints);
+  let dmax = calculateDMAX(coefficients, dataPoints);
   document.getElementById('dmax-value').textContent = DMAX: Load = ${dmax.toFixed(2)};
 
   // Calculate Modified DMAX
