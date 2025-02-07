@@ -107,7 +107,7 @@ function updateGraph() {
   let rSquared = calculateRSquared(dataPoints, polynomialCurve);
 
   // Calculate D-max
-  let dMaxPoint = calculateDMax(polynomialCurve);
+  let dMaxPoint = calculateDMax(polynomialCurve, dataPoints);
   console.log("D-max Point:", dMaxPoint);
 
   // Display the D-max point in the UI
@@ -131,6 +131,7 @@ function updateGraph() {
 
   chart.update();
 }
+
 
 // Polynomial Regression (3rd-order)
 function polynomialRegression(points, degree) {
