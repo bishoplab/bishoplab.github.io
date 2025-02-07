@@ -148,6 +148,18 @@ function updateGraph() {
   let dMaxPoint = calculateDMax(polynomialCurve);
   console.log("D-max Point:", dMaxPoint);
 
+  // Display the D-max point in the UI
+  document.getElementById("dmax-display").innerText = `D-max Point: x = ${dMaxPoint.x.toFixed(2)}, y = ${dMaxPoint.y.toFixed(2)}`;
+
+  // Add D-max point to the chart data
+  chart.data.datasets[2] = {
+    label: 'D-max Point',
+    borderColor: 'blue',
+    backgroundColor: 'blue',
+    pointRadius: 8,
+    data: [dMaxPoint]  // Add the D-max point as a single point
+  };
+
   // Update chart with data points and polynomial curve
   chart.data.datasets[0].data = [...dataPoints]; // Ensure black dots appear
   chart.data.datasets[1].data = [...polynomialCurve]; // Red polynomial line (smooth)
