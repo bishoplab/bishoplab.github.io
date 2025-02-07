@@ -144,8 +144,6 @@ function findMaxPerpendicularDistance(dataPoints, polynomialCurve) {
 // Function to display text on the chart
 function displayTextOnChart(dataPoints, polynomialCurve) {
   let ctx = chart.ctx;
-  
-  // Find the max x (load) and y (lactate concentration) values from the data
   let maxX = Math.max(...dataPoints.map(p => p.x));
   let maxY = Math.max(...dataPoints.map(p => p.y));
 
@@ -155,7 +153,10 @@ function displayTextOnChart(dataPoints, polynomialCurve) {
 
   // Convert the half-max values to chart pixel positions
   let xPos = chart.scales.x.getPixelForValue(halfMaxX);
-  let yPos = chart.scales.y.getPixelForValue(halfMaxY); 
+  let yPos = chart.scales.y.getPixelForValue(halfMaxY);
+
+  // Clear previous text before drawing new text
+  ctx.clearRect(0, 0, chart.width, chart.height);  // Clear the canvas
 
   // Customize text appearance and position
   ctx.save();
@@ -164,6 +165,7 @@ function displayTextOnChart(dataPoints, polynomialCurve) {
   ctx.fillText(`Half-Max Position - X: ${halfMaxX.toFixed(2)}, Y: ${halfMaxY.toFixed(2)}`, xPos + 10, yPos - 10); // Adjust positioning
   ctx.restore();
 }
+
 
 // Polynomial Regression (3rd-order)
 function polynomialRegression(points, degree) {
