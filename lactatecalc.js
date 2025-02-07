@@ -156,19 +156,19 @@ function evaluatePolynomialAtX(coefficients, x) {
   return y;
 }
 
-function displayTextBelowGraph(point) {
-  let textContainer = document.getElementById("closest-point-text");
+function displayDmaxToRight(point) {
+  let textContainer = document.getElementById("Dmax-text");
 
   if (!textContainer) {
     textContainer = document.createElement("div");
-    textContainer.id = "closest-point-text";
+    textContainer.id = "Dmax-text";
     document.body.appendChild(textContainer);
   }
 
-  textContainer.innerHTML = `Closest point on curve: X = ${point.x.toFixed(2)}, Y = ${point.y.toFixed(2)}`;
+  textContainer.innerHTML = `Dmax: X = ${point.x.toFixed(2)}, Y = ${point.y.toFixed(2)}`;
   textContainer.style.position = "absolute";
   textContainer.style.top = (chart.canvas.height + 20) + "px"; // Place below the graph
-  textContainer.style.left = "10px"; // Adjust position horizontally
+  textContainer.style.left = (chart.canvas.width - 180) + "px"; // Adjust position horizontally to the right of the graph
 }
 
 function updateGraph() {
@@ -203,8 +203,8 @@ function updateGraph() {
   // Calculate R² value for the regression
   let rSquared = calculateRSquared(dataPoints, polynomialCurve);
 
-  // Find the maximum perpendicular distance and its corresponding point on the polynomial curve
-  let closestPointOnCurve = findMaxPerpendicularDistance(polynomialCurve, dataPoints[0], dataPoints[dataPoints.length - 1]);
+  // Find the maximum perpendicular distance (Dmax) and its corresponding point on the polynomial curve
+  let DmaxPoint = findMaxPerpendicularDistance(polynomialCurve, dataPoints[0], dataPoints[dataPoints.length - 1]);
 
   // Update the chart with the new data points and polynomial curve
   chart.data.datasets[0].data = dataPoints; // Update black dots dataset
@@ -213,10 +213,11 @@ function updateGraph() {
   // Update chart title with R² value
   chart.options.plugins.title.text = `Lactate Threshold Curve (R²: ${rSquared.toFixed(4)})`;
 
-  // Display the closest point below the graph
-  displayTextBelowGraph(closestPointOnCurve);
+  // Display the Dmax point to the right of the graph
+  displayDmaxToRight(DmaxPoint);
 
   // Finally, update the chart to reflect all changes
   chart.update();
 }
+
 
