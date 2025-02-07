@@ -259,4 +259,4 @@ function evaluatePolynomial(coefficients, x) {
     y += coefficients[i] * Math.pow(x, coefficients.length - 1 - i);
   }
   return y;
-}
+} 
