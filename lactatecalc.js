@@ -166,21 +166,25 @@ function updateGraph() {
 
 // Function to find the maximum perpendicular distance from the polynomial curve to the line
 function findMaxPerpendicularDistance(polyCurve, lineStart, lineEnd) {
+  // Calculate the slope (m) and intercept (b) of the line from start to end
   let m = (lineEnd.y - lineStart.y) / (lineEnd.x - lineStart.x); // Slope
-  let b = lineStart.y - m * lineStart.x; // Intercept
+  let b = lineStart.y - m * lineStart.x; // Y-intercept
 
   let maxDistance = -Infinity;
   let maxPoint = null;
 
   for (let point of polyCurve) {
+    // Calculate perpendicular distance from point to line
     let distance = Math.abs(m * point.x - point.y + b) / Math.sqrt(m * m + 1);
 
+    // Update if we find a greater distance
     if (distance > maxDistance) {
       maxDistance = distance;
       maxPoint = point;
     }
   }
 
+  // Return the point with the maximum perpendicular distance
   return { maxDistance, maxPoint };
 }
 
