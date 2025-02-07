@@ -128,7 +128,7 @@
 
     <button class="tool-button" onclick="toggleTool()">Lactate Threshold Calculator</button>
 
-    <div class="tool-container" id="tool-container">
+    <div class="tool-container" id="tool-container" style="display: none;">
       
       <!-- Table for input -->
       <div class="table-container">
@@ -157,29 +157,8 @@
     </div>
   </div>
 
-  <script>
-    // Function to toggle the visibility of the tool container
-    function toggleTool() {
-      var toolContainer = document.getElementById('tool-container');
-      if (toolContainer.style.display === 'none' || toolContainer.style.display === '') {
-        toolContainer.style.display = 'block';
-      } else {
-        toolContainer.style.display = 'none';
-      }
-    }
-
-    // Sample function to add a row dynamically
-    function addRow() {
-      var table = document.getElementById("data-table").getElementsByTagName('tbody')[0];
-      var newRow = table.insertRow(table.rows.length);
-      newRow.innerHTML = `
-        <td><input type="number" name="load" placeholder="Load"></td>
-        <td><input type="number" name="lactate" placeholder="Lactate concentration"></td>
-      `;
-    }
-  </script>
-
   <script src="lactatecalc.js"></script>
 
 </body>
 </html>
+
