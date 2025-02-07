@@ -60,9 +60,7 @@ function initializeGraph() {
         title: {
           display: true,
           text: 'Lactate Threshold Curve (R²: )',
-          font: {
-            size: 16
-          }
+          font: { size: 16 }
         }
       },
       scales: {
@@ -161,8 +159,6 @@ function displayTextOnChart(xValue, maxDistance) {
   ctx.fillText(`Max Perpendicular X: ${xValue.toFixed(2)}`, xPos + 10, yPos - 10); // Adjust positioning
   ctx.restore();
 }
-
-
 
 // Polynomial Regression (3rd-order)
 function polynomialRegression(points, degree) {
