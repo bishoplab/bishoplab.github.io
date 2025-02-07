@@ -60,7 +60,9 @@ function initializeGraph() {
         title: {
           display: true,
           text: 'Lactate Threshold Curve (R²: )',
-          font: { size: 16 }
+          font: {
+            size: 16
+          }
         }
       },
       scales: {
@@ -69,6 +71,47 @@ function initializeGraph() {
       }
     }
   });
+}
+
+function updateGraph() {
+  if (!chart) return;
+
+  let table = document.getElementById("data-table").getElementsByTagName('tbody')[0];
+  let rows = table.getElementsByTagName('tr');
+
+  let dataPoints = [];
+
+  for (let row of rows) {
+    let inputs = row.getElementsByTagName('input');
+    let x = parseFloat(inputs[0].value);
+    let y = parseFloat(inputs[1].value);
+
+    if (!isNaN(x) && !isNaN(y)) {
+      dataPoints.push({ x, y });
+    }
+  }
+
+  console.log("Data Points:", dataPoints); // Debugging output
+
+  if (dataPoints.length === 0) return;
+
+  dataPoints.sort((a, b) => a.x - b.x); // Sort by x-value for the curve fitting
+
+  // Polynomial regression (3rd-order) to fit a curve
+  let coefficients = polynomialRegression(dataPoints, 3);
+  let polynomialCurve = generatePolynomialCurve(coefficients, dataPoints);
+
+  // Calculate R² value
+  let rSquared = calculateRSquared(dataPoints, polynomialCurve);
+
+  // Update chart with data points and polynomial curve
+  chart.data.datasets[0].data = [...dataPoints]; // Ensure black dots appear
+  chart.data.datasets[1].data = [...polynomialCurve]; // Red polynomial line (smooth)
+
+  // Update the title with the R² value
+  chart.options.plugins.title.text = `Lactate Threshold Curve (R²: ${rSquared.toFixed(4)})`;
+
+  chart.update();
 }
 
 // Polynomial Regression (3rd-order)
@@ -112,112 +155,4 @@ function calculateRSquared(points, polynomialCurve) {
   let ssResidual = points.reduce((sum, p, i) => sum + Math.pow(p.y - polynomialCurve[i].y, 2), 0);
   return 1 - (ssResidual / ssTotal);
 }
-
-// Update the findMaxPerpendicularDistance function to return the closest point on the full polynomial curve
-function findMaxPerpendicularDistance(polynomialCurve, firstPoint, lastPoint) {
-  let maxDistance = 0;
-  let perpendicularX = null;
-
-  // Calculate slope and intercept for the line connecting the first and last data points
-  let slope = (lastPoint.y - firstPoint.y) / (lastPoint.x - firstPoint.x);
-  let intercept = firstPoint.y - (slope * firstPoint.x);
-
-  // Iterate over the polynomial curve to calculate the perpendicular distance at each point
-  for (let i = 0; i < polynomialCurve.length; i++) {
-    let point = polynomialCurve[i];
-    let x0 = point.x;
-    let y0 = point.y;
-
-    // Calculate the perpendicular distance from the point to the line using the distance formula
-    let distance = Math.abs(slope * x0 - y0 + intercept) / Math.sqrt(slope * slope + 1);
-
-    // If the calculated perpendicular distance is greater than the current max distance, update it
-    if (distance > maxDistance) {
-      maxDistance = distance;
-      perpendicularX = point.x; // Store the x-coordinate of the max distance
-    }
-  }
-
-  // Find the corresponding y-value on the polynomial curve by evaluating the polynomial at perpendicularX
-  let closestPointOnCurve = {
-    x: perpendicularX,
-    y: evaluatePolynomialAtX(polynomialCurve, perpendicularX)
-  };
-
-  return closestPointOnCurve;
-}
-
-// Function to evaluate the polynomial at a given x-value using the coefficients
-function evaluatePolynomialAtX(coefficients, x) {
-  let y = 0;
-  for (let i = 0; i < coefficients.length; i++) {
-    y += coefficients[i] * Math.pow(x, coefficients.length - 1 - i);
-  }
-  return y;
-}
-
-function displayDmaxToRight(point) {
-  let textContainer = document.getElementById("Dmax-text");
-
-  if (!textContainer) {
-    textContainer = document.createElement("div");
-    textContainer.id = "Dmax-text";
-    document.body.appendChild(textContainer);
-  }
-
-  textContainer.innerHTML = `Dmax: X = ${point.x.toFixed(2)}, Y = ${point.y.toFixed(2)}`;
-  textContainer.style.position = "absolute";
-  textContainer.style.top = (chart.canvas.height + 20) + "px"; // Place below the graph
-  textContainer.style.left = (chart.canvas.width - 180) + "px"; // Adjust position horizontally to the right of the graph
-}
-
-function updateGraph() {
-  if (!chart) return;
-
-  let table = document.getElementById("data-table").getElementsByTagName('tbody')[0];
-  let rows = table.getElementsByTagName('tr');
-
-  let dataPoints = [];
-
-  // Extract values from the table and store them as data points
-  for (let row of rows) {
-    let inputs = row.getElementsByTagName('input');
-    let x = parseFloat(inputs[0].value);
-    let y = parseFloat(inputs[1].value);
-
-    if (!isNaN(x) && !isNaN(y)) {
-      dataPoints.push({ x, y });
-    }
-  }
-
-  // If no valid data points, do nothing
-  if (dataPoints.length === 0) return;
-
-  // Sort data points by x value
-  dataPoints.sort((a, b) => a.x - b.x);
-
-  // Perform polynomial regression to get the curve
-  let coefficients = polynomialRegression(dataPoints, 3);
-  let polynomialCurve = generatePolynomialCurve(coefficients, dataPoints);
-
-  // Calculate R² value for the regression
-  let rSquared = calculateRSquared(dataPoints, polynomialCurve);
-
-  // Find the maximum perpendicular distance (Dmax) and its corresponding point on the polynomial curve
-  let DmaxPoint = findMaxPerpendicularDistance(polynomialCurve, dataPoints[0], dataPoints[dataPoints.length - 1]);
-
-  // Update the chart with the new data points and polynomial curve
-  chart.data.datasets[0].data = dataPoints; // Update black dots dataset
-  chart.data.datasets[1].data = polynomialCurve; // Update polynomial curve dataset
-
-  // Update chart title with R² value
-  chart.options.plugins.title.text = `Lactate Threshold Curve (R²: ${rSquared.toFixed(4)})`;
-
-  // Display the Dmax point to the right of the graph
-  displayDmaxToRight(DmaxPoint);
-
-  // Finally, update the chart to reflect all changes
-  chart.update();
-}
-
 
