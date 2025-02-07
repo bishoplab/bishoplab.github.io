@@ -73,7 +73,6 @@ function initializeGraph() {
   });
 }
 
-
 function updateGraph() {
   if (!chart) return;
 
@@ -111,6 +110,11 @@ function updateGraph() {
   // Display the closest X value and its corresponding Y on the UI
   document.getElementById("closest-x-display").innerText = `Closest x on curve: ${closestXOnCurve.x.toFixed(2)}, y = ${closestXOnCurve.y.toFixed(2)}`;
 
+  // Find the max perpendicular distance from the polynomial curve to the line
+  let maxPerpendicular = findMaxPerpendicularDistance(polynomialCurve, dataPoints[0], dataPoints[dataPoints.length - 1]);
+  console.log("Maximum Perpendicular Distance:", maxPerpendicular.maxDistance);
+  console.log("Point with Maximum Perpendicular Distance:", maxPerpendicular.maxPoint);
+
   // Update the chart with data points and polynomial curve
   chart.data.datasets[0].data = [...dataPoints]; // Ensure black dots appear
   chart.data.datasets[1].data = [...polynomialCurve]; // Red polynomial line (smooth)
@@ -121,23 +125,29 @@ function updateGraph() {
   chart.update();
 }
 
-// Function to find the closest x-value on the polynomial curve
-function findClosestXOnCurve(dataPoints, polynomialCurve) {
-  let closestPoint = null;
-  let minDistance = Infinity;
+// Function to find the maximum perpendicular distance from the polynomial curve to the line
+function findMaxPerpendicularDistance(polyCurve, firstPoint, lastPoint) {
+  // Calculate the slope (m) and intercept (b) of the line through the first and last points
+  let m = (lastPoint.y - firstPoint.y) / (lastPoint.x - firstPoint.x); // Slope
+  let b = firstPoint.y - m * firstPoint.x; // Intercept
 
-  for (let dataPoint of dataPoints) {
-    for (let curvePoint of polynomialCurve) {
-      // Calculate the distance between the data point and the curve point
-      let distance = Math.abs(dataPoint.x - curvePoint.x);
-      if (distance < minDistance) {
-        minDistance = distance;
-        closestPoint = curvePoint;
-      }
+  // Initialize variables for the maximum distance and the corresponding point
+  let maxDistance = -Infinity;
+  let maxPoint = null;
+
+  // Iterate through each point on the polynomial curve
+  for (let point of polyCurve) {
+    // Calculate the perpendicular distance to the line
+    let distance = Math.abs(m * point.x - point.y + b) / Math.sqrt(m * m + 1);
+
+    // Update the maximum distance and point if necessary
+    if (distance > maxDistance) {
+      maxDistance = distance;
+      maxPoint = point;
     }
   }
 
-  return closestPoint; // Return the closest point on the curve
+  return { maxDistance, maxPoint };
 }
 
 // Polynomial Regression (3rd-order)
@@ -181,4 +191,3 @@ function calculateRSquared(points, polynomialCurve) {
   let ssResidual = points.reduce((sum, p, i) => sum + Math.pow(p.y - polynomialCurve[i].y, 2), 0);
   return 1 - (ssResidual / ssTotal);
 }
-
