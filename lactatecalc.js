@@ -91,6 +91,10 @@ function updateGraph() {
     }
   }
 
+  console.log("Data Points:", dataPoints); // Debugging output
+
+  if (dataPoints.length === 0) return;
+
   dataPoints.sort((a, b) => a.x - b.x); // Sort by x-value for the curve fitting
 
   // Polynomial regression (3rd-order) to fit a curve
@@ -101,11 +105,11 @@ function updateGraph() {
   let rSquared = calculateRSquared(dataPoints, polynomialCurve);
 
   // Update chart with data points and polynomial curve
-  chart.data.datasets[0].data = dataPoints; // Black dots
-  chart.data.datasets[1].data = polynomialCurve; // Red polynomial line (smooth)
+  chart.data.datasets[0].data = [...dataPoints]; // Ensure black dots appear
+  chart.data.datasets[1].data = [...polynomialCurve]; // Red polynomial line (smooth)
 
   // Update the title with the R² value
-  chart.options.plugins.title.text = Lactate Threshold Curve (R²: ${rSquared.toFixed(4)});
+  chart.options.plugins.title.text = `Lactate Threshold Curve (R²: ${rSquared.toFixed(4)})`;
 
   chart.update();
 }
