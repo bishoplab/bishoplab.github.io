@@ -100,6 +100,9 @@ function updateGraph() {
   // Calculate R² value
   let rSquared = calculateRSquared(dataPoints, polynomialCurve);
 
+  // Find the perpendicular distance and its x-value
+  let { maxDistance, perpendicularX } = findMaxPerpendicularDistance(dataPoints, polynomialCurve);
+
   // Update chart with data points and polynomial curve
   chart.data.datasets[0].data = [...dataPoints]; // Black dots
   chart.data.datasets[1].data = [...polynomialCurve]; // Red polynomial line
@@ -107,11 +110,12 @@ function updateGraph() {
   // Update the title with R² value
   chart.options.plugins.title.text = `Lactate Threshold Curve (R²: ${rSquared.toFixed(4)})`;
 
-  // Ensure text displays on the chart
-  displayTextOnChart(dataPoints, polynomialCurve);
+  // Display the max perpendicular distance load below the graph
+  displayTextBelowGraph(perpendicularX);
 
   chart.update();
 }
+
 
 // Function to find the max perpendicular distance and its x-coordinate
 function findMaxPerpendicularDistance(dataPoints, polynomialCurve) {
