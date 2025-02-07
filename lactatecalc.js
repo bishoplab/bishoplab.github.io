@@ -113,34 +113,45 @@ function calculateRSquared(points, polynomialCurve) {
   return 1 - (ssResidual / ssTotal);
 }
 
-// Function to find the max perpendicular distance and its x-coordinate along the polynomial curve
 function findMaxPerpendicularDistance(polynomialCurve) {
-  let firstPoint = polynomialCurve[0];
-  let lastPoint = polynomialCurve[polynomialCurve.length - 1];
-
-  // Equation of the linear line y = mx + b based on first and last polynomial points
-  let slope = (lastPoint.y - firstPoint.y) / (lastPoint.x - firstPoint.x);
-  let intercept = firstPoint.y - slope * firstPoint.x;
-
   let maxDistance = 0;
   let perpendicularX = null;
 
-  // Iterate over the polynomial curve for maximum perpendicular distance
-  for (let point of polynomialCurve) {
+  // Iterate over the polynomial curve to calculate the perpendicular distance at each point
+  for (let i = 0; i < polynomialCurve.length; i++) {
+    let point = polynomialCurve[i];
     let x0 = point.x;
     let y0 = point.y;
 
-    // Calculate the perpendicular distance from (x0, y0) to the line y = mx + b
-    let distance = Math.abs(slope * x0 - y0 + intercept) / Math.sqrt(slope ** 2 + 1);
+    // Calculate the perpendicular distance from the point to the curve. 
+    // We can do this by finding the closest x-coordinate to the point and its corresponding y-value.
+    let closestPoint = findClosestPointOnCurve(polynomialCurve, x0);
+    let distance = Math.abs(y0 - closestPoint.y);
 
     // If the calculated perpendicular distance is greater than the current max distance, update it
     if (distance > maxDistance) {
       maxDistance = distance;
-      perpendicularX = x0; // Store the x-coordinate of the max distance
+      perpendicularX = closestPoint.x; // Store the x-coordinate of the max distance
     }
   }
 
   return { maxDistance, perpendicularX };
+}
+
+// Helper function to find the closest point on the polynomial curve for a given x value
+function findClosestPointOnCurve(curve, x) {
+  let closestPoint = null;
+  let minDistance = Infinity;
+
+  for (let point of curve) {
+    let distance = Math.abs(point.x - x);
+    if (distance < minDistance) {
+      minDistance = distance;
+      closestPoint = point;
+    }
+  }
+
+  return closestPoint;
 }
 
 // Function to display text on the chart
