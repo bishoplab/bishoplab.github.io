@@ -71,51 +71,6 @@ function initializeGraph() {
   });
 }
 
-function updateGraph() {
-  if (!chart) return;
-
-  let table = document.getElementById("data-table").getElementsByTagName('tbody')[0];
-  let rows = table.getElementsByTagName('tr');
-
-  let dataPoints = [];
-
-  for (let row of rows) {
-    let inputs = row.getElementsByTagName('input');
-    let x = parseFloat(inputs[0].value);
-    let y = parseFloat(inputs[1].value);
-
-    if (!isNaN(x) && !isNaN(y)) {
-      dataPoints.push({ x, y });
-    }
-  }
-
-  if (dataPoints.length === 0) return;
-
-  dataPoints.sort((a, b) => a.x - b.x); // Sort by x-value
-
-  // Perform polynomial regression (3rd-order)
-  let coefficients = polynomialRegression(dataPoints, 3);
-  let polynomialCurve = generatePolynomialCurve(coefficients, dataPoints);
-
-  // Calculate R² value
-  let rSquared = calculateRSquared(dataPoints, polynomialCurve);
-
-  // Find the perpendicular distance and its x-value
-  let { maxDistance, perpendicularX } = findMaxPerpendicularDistance(dataPoints, polynomialCurve);
-
-  // Update chart with data points and polynomial curve
-  chart.data.datasets[0].data = [...dataPoints]; // Black dots
-  chart.data.datasets[1].data = [...polynomialCurve]; // Red polynomial line
-
-  // Update the title with R² value
-  chart.options.plugins.title.text = `Lactate Threshold Curve (R²: ${rSquared.toFixed(4)})`;
-
-  // Display the max perpendicular distance load below the graph
-  displayTextBelowGraph(perpendicularX);
-
-  chart.update();
-}
-
 
 // Function to find the max perpendicular distance and its x-coordinate
 function findMaxPerpendicularDistance(dataPoints, polynomialCurve) {
@@ -146,31 +101,23 @@ function findMaxPerpendicularDistance(dataPoints, polynomialCurve) {
 }
 
 // Function to display text on the chart
-function displayTextOnChart(dataPoints, polynomialCurve) {
-  let ctx = chart.ctx;
-  let maxX = Math.max(...dataPoints.map(p => p.x));
-  let maxY = Math.max(...dataPoints.map(p => p.y));
+function displayTextBelowGraph(perpendicularX) {
+  // Create the text element if it doesn't already exist
+  let textElement = document.getElementById("loadText");
+  
+  // If the text element is missing, create and append it
+  if (!textElement) {
+    textElement = document.createElement("div");
+    textElement.id = "loadText";
+    textElement.style.marginTop = "20px"; // Space below the chart
+    textElement.style.fontSize = "14px"; // Adjust font size as needed
+    textElement.style.color = "#333"; // Text color
+    document.getElementById('tool-container').appendChild(textElement);
+  }
 
-  // Position the text at half of these values
-  let halfMaxX = maxX / 2;
-  let halfMaxY = maxY / 2;
-
-  // Convert the half-max values to chart pixel positions
-  let xPos = chart.scales.x.getPixelForValue(halfMaxX);
-  let yPos = chart.scales.y.getPixelForValue(halfMaxY);
-
-  // Clear previous text before drawing new text
-  ctx.clearRect(0, 0, chart.width, chart.height);  // Clear the canvas
-
-  // Customize text appearance and position
-  ctx.save();
-  ctx.font = "14px Arial";
-  ctx.fillStyle = "blue";
-  ctx.fillText(`Half-Max Position - X: ${halfMaxX.toFixed(2)}, Y: ${halfMaxY.toFixed(2)}`, xPos + 10, yPos - 10); // Adjust positioning
-  ctx.restore();
+  // Update the text content with the perpendicular X value
+  textElement.innerHTML = `Max Perpendicular Distance Load: ${perpendicularX.toFixed(2)} units`;
 }
-
-
 // Polynomial Regression (3rd-order)
 function polynomialRegression(points, degree) {
   let xValues = points.map(p => p.x);
@@ -212,3 +159,53 @@ function calculateRSquared(points, polynomialCurve) {
   let ssResidual = points.reduce((sum, p, i) => sum + Math.pow(p.y - polynomialCurve[i].y, 2), 0);
   return 1 - (ssResidual / ssTotal);
 }
+
+function updateGraph() {
+  if (!chart) return;
+
+  let table = document.getElementById("data-table").getElementsByTagName('tbody')[0];
+  let rows = table.getElementsByTagName('tr');
+
+  let dataPoints = [];
+
+  // Extract values from the table and store them as data points
+  for (let row of rows) {
+    let inputs = row.getElementsByTagName('input');
+    let x = parseFloat(inputs[0].value);
+    let y = parseFloat(inputs[1].value);
+
+    if (!isNaN(x) && !isNaN(y)) {
+      dataPoints.push({ x, y });
+    }
+  }
+
+  // If no valid data points, do nothing
+  if (dataPoints.length === 0) return;
+
+  // Sort data points by x value
+  dataPoints.sort((a, b) => a.x - b.x);
+
+  // Perform polynomial regression to get the curve
+  let coefficients = polynomialRegression(dataPoints, 3);
+  let polynomialCurve = generatePolynomialCurve(coefficients, dataPoints);
+
+  // Calculate R² value for the regression
+  let rSquared = calculateRSquared(dataPoints, polynomialCurve);
+
+  // Find the maximum perpendicular distance and its corresponding x value
+  let { maxDistance, perpendicularX } = findMaxPerpendicularDistance(dataPoints, polynomialCurve);
+
+  // Update the chart with the new data points and polynomial curve
+  chart.data.datasets[0].data = dataPoints; // Update black dots dataset
+  chart.data.datasets[1].data = polynomialCurve; // Update polynomial curve dataset
+
+  // Update chart title with R² value
+  chart.options.plugins.title.text = `Lactate Threshold Curve (R²: ${rSquared.toFixed(4)})`;
+
+  // Update the text below the chart with the max perpendicular distance load
+  displayTextBelowGraph(perpendicularX);
+
+  // Finally, update the chart to reflect all changes
+  chart.update();
+}
+
