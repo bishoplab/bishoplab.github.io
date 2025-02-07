@@ -32,28 +32,23 @@ function initializeGraph() {
   chart = new Chart(ctx, {
     type: 'scatter',
     data: {
-      datasets: [
-        {
-          label: 'Data Points',
-          borderColor: 'black',
-          backgroundColor: 'black',
-          fill: false,
-          showLine: false, // Points only
-          pointRadius: 5,
-          data: [] // Initially empty, will be filled with data points
-        },
-        {
-          label: 'Polynomial Fit',
-          borderColor: 'red',
-          backgroundColor: 'transparent',
-          fill: false,
-          showLine: true,
-          tension: 0.4,
-          borderWidth: 2,
-          pointRadius: 0, // No points for the polynomial curve
-          data: [] // Polynomial curve data
-        }
-      ]
+      datasets: [{
+        label: 'Data Points',
+        borderColor: 'transparent', // No line connecting data points
+        backgroundColor: 'black',
+        pointRadius: 5,
+        data: [] // Start empty, but will be populated with the points
+      }, {
+        label: 'Polynomial Fit',
+        borderColor: 'red',
+        backgroundColor: 'transparent',
+        fill: false,
+        showLine: true,
+        tension: 0.4, // Smooth the line (non-zero value for smooth curve)
+        borderWidth: 2,
+        pointRadius: 0, // No points on the curve
+        data: [] // Polynomial curve data, initially empty
+      }]
     },
     options: {
       responsive: true,
@@ -106,82 +101,13 @@ function updateGraph() {
   let rSquared = calculateRSquared(dataPoints, polynomialCurve);
 
   // Update chart with data points and polynomial curve
-  chart.data.datasets[0].data = dataPoints; // Add data points
-  chart.data.datasets[1].data = polynomialCurve; // Add polynomial fit curve
+  chart.data.datasets[0].data = dataPoints; // Black dots
+  chart.data.datasets[1].data = polynomialCurve; // Red polynomial line (smooth)
 
   // Update the title with the R² value
-  chart.options.plugins.title.text = `Lactate Threshold Curve (R²: ${rSquared.toFixed(4)})`;
-
-  // Calculate the Lactate Threshold (where y = 4)
-  let lactateThreshold = findLactateThreshold(coefficients, 4);
-  document.getElementById('lactate-threshold-value').textContent = `Lactate Threshold: Load = ${lactateThreshold.toFixed(2)}`;
-
-  // Calculate DMAX
-  let dmax = calculateDMAX(coefficients, dataPoints);
-  document.getElementById('dmax-value').textContent = `DMAX: Load = ${dmax.toFixed(2)}`;
-
-  // Calculate Modified DMAX
-  let modifiedDmax = calculateModifiedDmax(coefficients);
-  let modifiedDmaxY = evaluatePolynomial(coefficients, modifiedDmax);
-  document.getElementById('modified-dmax-value').textContent = `Modified DMAX: Load = ${modifiedDmax.toFixed(2)}`;
-
-  // Add a dotted line at the Modified Dmax Load
-  chart.data.datasets.push({
-    label: 'Modified Dmax Line',
-    borderColor: 'blue',
-    backgroundColor: 'transparent',
-    borderDash: [5, 5], // Dotted line style
-    fill: false,
-    data: [{ x: modifiedDmax, y: 0 }, { x: modifiedDmax, y: modifiedDmaxY }],
-    pointRadius: 0
-  });
+  chart.options.plugins.title.text = Lactate Threshold Curve (R²: ${rSquared.toFixed(4)});
 
   chart.update();
-}
-
-// Find the x-value where the polynomial curve equals a specific y-value (e.g., 4 for Lactate Threshold)
-function findLactateThreshold(coefficients, targetY) {
-  // Find the x-value where the polynomial curve equals the target Y value
-  let xLow = Math.min(...dataPoints.map(p => p.x));  // Set the lower bound to the smallest x value
-  let xHigh = Math.max(...dataPoints.map(p => p.x)); // Set the upper bound to the largest x value
-  let tolerance = 0.001;
-
-  while (xHigh - xLow > tolerance) {
-    let xMid = (xLow + xHigh) / 2;
-    let yMid = evaluatePolynomial(coefficients, xMid);
-
-    if (yMid < targetY) {
-      xLow = xMid; // Move the lower bound up
-    } else {
-      xHigh = xMid; // Move the upper bound down
-    }
-  }
-
-  return (xLow + xHigh) / 2;
-}
-
-// Calculate the DMAX point (Max perpendicular distance to the straight line formed by first and last data points)
-function calculateDMAX(coefficients, dataPoints) {
-  let firstPoint = dataPoints[0];
-  let lastPoint = dataPoints[dataPoints.length - 1];
-
-  let slope = (lastPoint.y - firstPoint.y) / (lastPoint.x - firstPoint.x);
-  let intercept = firstPoint.y - slope * firstPoint.x;
-
-  let maxDistance = 0;
-  let dmaxX = 0;
-
-  for (let point of dataPoints) {
-    let yLine = slope * point.x + intercept;
-    let distance = Math.abs(point.y - yLine) / Math.sqrt(1 + Math.pow(slope, 2));
-
-    if (distance > maxDistance) {
-      maxDistance = distance;
-      dmaxX = point.x;
-    }
-  }
-
-  return dmaxX;
 }
 
 // Polynomial Regression (3rd-order)
@@ -225,23 +151,3 @@ function calculateRSquared(points, polynomialCurve) {
   let ssResidual = points.reduce((sum, p, i) => sum + Math.pow(p.y - polynomialCurve[i].y, 2), 0);
   return 1 - (ssResidual / ssTotal);
 }
-
-// Calculate the second derivative of the polynomial and find its maximum (Modified Dmax)
-function calculateModifiedDmax(coefficients) {
-  let a = coefficients[0];
-  let b = coefficients[1];
-  
-  let xModifiedDmax = -b / (3 * a);  // Solve 6ax + 2b = 0
-  
-  return xModifiedDmax;
-}
-
-// Evaluate polynomial at x value
-function evaluatePolynomial(coefficients, x) {
-  let y = 0;
-  for (let i = 0; i < coefficients.length; i++) {
-    y += coefficients[i] * Math.pow(x, coefficients.length - 1 - i);
-  }
-  return y;
-}
-
