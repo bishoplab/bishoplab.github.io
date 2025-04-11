@@ -10,7 +10,6 @@ function toggleTool() {
     initializeGraph();
   }
 
-  // Add a row if the tool is being shown and it's the first time
   if (isHidden && document.getElementById("data-table").getElementsByTagName('tbody')[0].children.length === 0) {
     addRow();
   }
@@ -34,35 +33,33 @@ function initializeGraph() {
     data: {
       datasets: [{
         label: 'Data Points',
-        borderColor: 'transparent', // No line connecting data points
+        borderColor: 'transparent',
         backgroundColor: 'black',
         pointRadius: 5,
-        data: [] // Start empty, but will be populated with the points
+        data: []
       }, {
         label: 'Polynomial Fit',
         borderColor: 'red',
         backgroundColor: 'transparent',
         fill: false,
         showLine: true,
-        tension: 0.4, // Smooth the line (non-zero value for smooth curve)
+        tension: 0.4,
         borderWidth: 2,
-        pointRadius: 0, // No points on the curve
-        data: [] // Polynomial curve data, initially empty
+        pointRadius: 0,
+        data: []
       }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: true,
-      aspectRatio: 1, // Set aspect ratio to 1 to prevent stretching
+      aspectRatio: 1,
       plugins: {
         legend: { display: false },
-        tooltip: { enabled: false }, // Disable tooltip as it's not needed for this chart
+        tooltip: { enabled: false },
         title: {
           display: true,
           text: 'Lactate Threshold Curve (R²: )',
-          font: {
-            size: 16
-          }
+          font: { size: 16 }
         }
       },
       scales: {
@@ -91,35 +88,27 @@ function updateGraph() {
     }
   }
 
-  console.log("Data Points:", dataPoints); // Debugging output
-
   if (dataPoints.length === 0) return;
 
-  dataPoints.sort((a, b) => a.x - b.x); // Sort by x-value for the curve fitting
+  dataPoints.sort((a, b) => a.x - b.x);
 
-  // Polynomial regression (3rd-order) to fit a curve
   let coefficients = polynomialRegression(dataPoints, 3);
   let polynomialCurve = generatePolynomialCurve(coefficients, dataPoints);
 
-  // Calculate R² value
   let rSquared = calculateRSquared(dataPoints, polynomialCurve);
 
-  // Update chart with data points and polynomial curve
-  chart.data.datasets[0].data = [...dataPoints]; // Ensure black dots appear
-  chart.data.datasets[1].data = [...polynomialCurve]; // Red polynomial line (smooth)
+  chart.data.datasets[0].data = [...dataPoints];
+  chart.data.datasets[1].data = [...polynomialCurve];
 
-  // Update the title with the R² value
   chart.options.plugins.title.text = `Lactate Threshold Curve (R²: ${rSquared.toFixed(4)})`;
 
   chart.update();
 }
 
-// Polynomial Regression (3rd-order)
 function polynomialRegression(points, degree) {
   let xValues = points.map(p => p.x);
   let yValues = points.map(p => p.y);
   
-  // Constructing the Vandermonde matrix (X matrix) and the Y vector
   let X = [];
   for (let i = 0; i < points.length; i++) {
     X[i] = [];
@@ -127,17 +116,18 @@ function polynomialRegression(points, degree) {
       X[i][j] = Math.pow(xValues[i], degree - j);
     }
   }
-  
-  // Solving for the polynomial coefficients using least squares
+
   let Xt = math.transpose(X);
   let XtX = math.multiply(Xt, X);
   let XtY = math.multiply(Xt, yValues);
-  let coefficients = math.lusolve(XtX, XtY);
+  let coefficientsMatrix = math.lusolve(XtX, XtY);
+
+  // Flatten coefficients (from 2D to 1D)
+  let coefficients = coefficientsMatrix.map(row => row[0]);
 
   return coefficients;
 }
 
-// Generate y-values for the polynomial curve based on the fitted coefficients
 function generatePolynomialCurve(coefficients, points) {
   return points.map(point => {
     let y = 0;
@@ -148,7 +138,6 @@ function generatePolynomialCurve(coefficients, points) {
   });
 }
 
-// Calculate R² value for the regression
 function calculateRSquared(points, polynomialCurve) {
   let meanY = points.reduce((sum, p) => sum + p.y, 0) / points.length;
   let ssTotal = points.reduce((sum, p) => sum + Math.pow(p.y - meanY, 2), 0);
