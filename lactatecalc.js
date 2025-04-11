@@ -3,7 +3,7 @@ let chart = null;
 function toggleTool() {
   let toolContainer = document.getElementById('tool-container');
   let isHidden = (toolContainer.style.display === 'none' || toolContainer.style.display === '');
-
+  
   toolContainer.style.display = isHidden ? 'flex' : 'none';
 
   if (isHidden && !chart) {
@@ -38,16 +38,6 @@ function initializeGraph() {
         backgroundColor: 'black',
         pointRadius: 5,
         data: [] // Start empty, but will be populated with the points
-      }, {
-        label: 'Polynomial Fit',
-        borderColor: 'red',
-        backgroundColor: 'transparent',
-        fill: false,
-        showLine: true,
-        tension: 0.4, // Smooth the line (non-zero value for smooth curve)
-        borderWidth: 2,
-        pointRadius: 0, // No points on the curve
-        data: [] // Polynomial curve data, initially empty
       }]
     },
     options: {
@@ -55,11 +45,17 @@ function initializeGraph() {
       maintainAspectRatio: true,
       aspectRatio: 1, // Set aspect ratio to 1 to prevent stretching
       plugins: {
-        legend: { display: false },
-        tooltip: { enabled: false }, // Disable tooltip as it's not needed for this chart
+        regression: {
+          type: 'polynomial', // Type of regression (polynomial)
+          degree: 3,         // Degree of the polynomial (3rd-degree)
+          line: {
+            color: 'red',    // Color of the regression line
+            width: 2         // Line width
+          }
+        },
         title: {
           display: true,
-          text: 'Lactate Threshold Curve (R²: )',
+          text: 'Lactate Threshold Curve',
           font: {
             size: 16
           }
@@ -69,8 +65,7 @@ function initializeGraph() {
         x: { title: { display: true, text: 'Load' }, min: 0 },
         y: { title: { display: true, text: 'Lactate Concentration' }, min: 0 }
       }
-    },
-    plugins: [ChartRegressions] // Register the regression plugin
+    }
   });
 }
 
@@ -99,22 +94,11 @@ function updateGraph() {
   dataPoints.sort((a, b) => a.x - b.x); // Sort by x-value for the curve fitting
 
   // Update chart with data points
-  chart.data.datasets[0].data = [...dataPoints]; // Ensure black dots appear
+  chart.data.datasets[0].data = [...dataPoints];
 
-  // Apply polynomial regression (using the ChartRegressions plugin for a 3rd-degree polynomial)
-  chart.data.datasets[1].regression = {
-    type: 'polynomial',
-    order: 3,
-    line: {
-      color: 'red',
-      width: 2
-    }
-  };
-
-  // Update the title with the R² value (calculated by the regression plugin)
-  const regressionResult = chart.data.datasets[1].regressionResult;
-  const rSquared = regressionResult ? regressionResult.r2 : 0;
-  chart.options.plugins.title.text = `Lactate Threshold Curve (R²: ${rSquared.toFixed(4)})`;
-
+  // Update the chart with the regression line
   chart.update();
 }
+
+// Helper function to handle polynomial regression (automatically done by the plugin)
+
