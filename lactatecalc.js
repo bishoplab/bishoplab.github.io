@@ -1,9 +1,9 @@
 let chart = null;
 
 function toggleTool() {
-  let toolContainer = document.getElementById('tool-container');
-  let isHidden = (toolContainer.style.display === 'none' || toolContainer.style.display === '');
-
+  const toolContainer = document.getElementById('tool-container');
+  const isHidden = (toolContainer.style.display === 'none' || toolContainer.style.display === '');
+  
   toolContainer.style.display = isHidden ? 'flex' : 'none';
 
   if (isHidden && !chart) {
@@ -16,17 +16,17 @@ function toggleTool() {
 }
 
 function addRow() {
-  let table = document.getElementById("data-table").getElementsByTagName('tbody')[0];
-  let newRow = table.insertRow();
-  let cell1 = newRow.insertCell(0);
-  let cell2 = newRow.insertCell(1);
-
+  const table = document.getElementById("data-table").getElementsByTagName('tbody')[0];
+  const newRow = table.insertRow();
+  const cell1 = newRow.insertCell(0);
+  const cell2 = newRow.insertCell(1);
+  
   cell1.innerHTML = '<input type="number" step="any" oninput="updateGraph()">'; 
   cell2.innerHTML = '<input type="number" step="any" oninput="updateGraph()">'; 
 }
 
 function initializeGraph() {
-  let ctx = document.getElementById('lactateChart').getContext('2d');
+  const ctx = document.getElementById('lactateChart').getContext('2d');
 
   chart = new Chart(ctx, {
     type: 'scatter',
@@ -57,7 +57,7 @@ function initializeGraph() {
       maintainAspectRatio: true,
       aspectRatio: 1,
       plugins: {
-        legend: { display: true },
+        legend: { display: false },
         tooltip: { enabled: false },
         title: {
           display: true,
@@ -76,15 +76,16 @@ function initializeGraph() {
 function updateGraph() {
   if (!chart) return;
 
-  let table = document.getElementById("data-table").getElementsByTagName('tbody')[0];
-  let rows = table.getElementsByTagName('tr');
+  const table = document.getElementById("data-table").getElementsByTagName('tbody')[0];
+  const rows = table.getElementsByTagName('tr');
 
-  let dataPoints = [];
+  const dataPoints = [];
 
-  for (let row of rows) {
-    let inputs = row.getElementsByTagName('input');
-    let x = parseFloat(inputs[0].value);
-    let y = parseFloat(inputs[1].value);
+  for (const row of rows) {
+    const inputs = row.getElementsByTagName('input');
+    const x = parseFloat(inputs[0].value);
+    const y = parseFloat(inputs[1].value);
+
     if (!isNaN(x) && !isNaN(y)) {
       dataPoints.push({ x, y });
     }
@@ -94,22 +95,24 @@ function updateGraph() {
 
   dataPoints.sort((a, b) => a.x - b.x);
 
-  let coefficients = polynomialRegression(dataPoints, 3);
-  let polynomialCurve = generatePolynomialCurve(coefficients, dataPoints);
-  let rSquared = calculateRSquared(dataPoints, polynomialCurve);
+  const coefficients = polynomialRegression(dataPoints, 3);
+  const polynomialCurve = generatePolynomialCurve(coefficients, dataPoints);
+
+  const rSquared = calculateRSquared(dataPoints, polynomialCurve);
 
   chart.data.datasets[0].data = [...dataPoints];
   chart.data.datasets[1].data = [...polynomialCurve];
+
   chart.options.plugins.title.text = `Lactate Threshold Curve (R²: ${rSquared.toFixed(4)})`;
 
   chart.update();
 }
 
 function polynomialRegression(points, degree) {
-  let xValues = points.map(p => p.x);
-  let yValues = points.map(p => p.y);
-
-  let X = [];
+  const xValues = points.map(p => p.x);
+  const yValues = points.map(p => p.y);
+  
+  const X = [];
   for (let i = 0; i < points.length; i++) {
     X[i] = [];
     for (let j = 0; j <= degree; j++) {
@@ -117,20 +120,24 @@ function polynomialRegression(points, degree) {
     }
   }
 
-  let Xt = math.transpose(X);
-  let XtX = math.multiply(Xt, X);
-  let XtY = math.multiply(Xt, yValues);
-  let coefficients = math.lusolve(XtX, XtY).flat();
+  const Xt = math.transpose(X);
+  const XtX = math.multiply(Xt, X);
+  const XtY = math.multiply(Xt, yValues);
+  const coefficientsMatrix = math.lusolve(XtX, XtY);
+
+  const coefficients = coefficientsMatrix.map(row => row[0]);
 
   return coefficients;
 }
 
 function generatePolynomialCurve(coefficients, points) {
-  let minX = Math.min(...points.map(p => p.x));
-  let maxX = Math.max(...points.map(p => p.x));
-  let curve = [];
+  const xValues = points.map(p => p.x);
+  const minX = Math.min(...xValues);
+  const maxX = Math.max(...xValues);
+  const step = (maxX - minX) / 100;
+  const curve = [];
 
-  for (let x = minX; x <= maxX; x += (maxX - minX) / 100) {
+  for (let x = minX; x <= maxX; x += step) {
     let y = 0;
     for (let i = 0; i < coefficients.length; i++) {
       y += coefficients[i] * Math.pow(x, coefficients.length - 1 - i);
@@ -142,11 +149,18 @@ function generatePolynomialCurve(coefficients, points) {
 }
 
 function calculateRSquared(points, polynomialCurve) {
-  let meanY = points.reduce((sum, p) => sum + p.y, 0) / points.length;
-  let ssTotal = points.reduce((sum, p) => sum + Math.pow(p.y - meanY, 2), 0);
-  let ssResidual = points.reduce((sum, p) => {
-    let fit = polynomialCurve.find(pt => pt.x >= p.x);
-    return sum + Math.pow(p.y - (fit ? fit.y : 0), 2);
-  }, 0);
+  const meanY = points.reduce((sum, p) => sum + p.y, 0) / points.length;
+  const ssTotal = points.reduce((sum, p) => sum + Math.pow(p.y - meanY, 2), 0);
+
+  const interpolatedY = points.map(p => {
+    const closest = polynomialCurve.reduce((prev, curr) =>
+      Math.abs(curr.x - p.x) < Math.abs(prev.x - p.x) ? curr : prev
+    );
+    return closest.y;
+  });
+
+  const ssResidual = points.reduce((sum, p, i) => sum + Math.pow(p.y - interpolatedY[i], 2), 0);
+
   return 1 - (ssResidual / ssTotal);
 }
+
