@@ -38,6 +38,16 @@ function initializeGraph() {
         backgroundColor: 'black',
         pointRadius: 5,
         data: [] // Start empty, but will be populated with the points
+      }, {
+        label: 'Polynomial Fit',
+        borderColor: 'red',
+        backgroundColor: 'transparent',
+        fill: false,
+        showLine: true,
+        tension: 0.4, // Smooth the line (non-zero value for smooth curve)
+        borderWidth: 2,
+        pointRadius: 0, // No points on the curve
+        data: [] // Polynomial curve data, initially empty
       }]
     },
     options: {
@@ -45,17 +55,11 @@ function initializeGraph() {
       maintainAspectRatio: true,
       aspectRatio: 1, // Set aspect ratio to 1 to prevent stretching
       plugins: {
-        regression: {
-          type: 'polynomial', // Type of regression (polynomial)
-          degree: 3,         // Degree of the polynomial (3rd-degree)
-          line: {
-            color: 'red',    // Color of the regression line
-            width: 2         // Line width
-          }
-        },
+        legend: { display: false },
+        tooltip: { enabled: false }, // Disable tooltip as it's not needed for this chart
         title: {
           display: true,
-          text: 'Lactate Threshold Curve',
+          text: 'Lactate Threshold Curve (R²: )',
           font: {
             size: 16
           }
@@ -93,12 +97,61 @@ function updateGraph() {
 
   dataPoints.sort((a, b) => a.x - b.x); // Sort by x-value for the curve fitting
 
-  // Update chart with data points
-  chart.data.datasets[0].data = [...dataPoints];
+  // Polynomial regression (1st-order for line of best fit) to fit a curve
+  let coefficients = polynomialRegression(dataPoints, 1); // Degree 1 for a line of best fit
+  let polynomialCurve = generatePolynomialCurve(coefficients, dataPoints);
 
-  // Update the chart with the regression line
+  // Calculate R² value
+  let rSquared = calculateRSquared(dataPoints, polynomialCurve);
+
+  // Update chart with data points and polynomial curve
+  chart.data.datasets[0].data = [...dataPoints]; // Ensure black dots appear
+  chart.data.datasets[1].data = [...polynomialCurve]; // Red polynomial line (best fit)
+
+  // Update the title with the R² value
+  chart.options.plugins.title.text = `Lactate Threshold Curve (R²: ${rSquared.toFixed(4)})`;
+
   chart.update();
 }
 
-// Helper function to handle polynomial regression (automatically done by the plugin)
+// Polynomial Regression (3rd-order)
+function polynomialRegression(points, degree) {
+  let xValues = points.map(p => p.x);
+  let yValues = points.map(p => p.y);
+  
+  // Constructing the Vandermonde matrix (X matrix) for the line of best fit (degree 1)
+  let X = [];
+  for (let i = 0; i < points.length; i++) {
+    X[i] = [];
+    for (let j = 0; j <= degree; j++) {
+      X[i][j] = Math.pow(xValues[i], degree - j); // For degree 1, this gives [1, x]
+    }
+  }
+  
+  // Solving for the polynomial coefficients using least squares
+  let Xt = math.transpose(X);
+  let XtX = math.multiply(Xt, X);
+  let XtY = math.multiply(Xt, yValues);
+  let coefficients = math.lusolve(XtX, XtY);
 
+  return coefficients;
+}
+
+// Generate y-values for the polynomial curve (best fit line) based on the fitted coefficients
+function generatePolynomialCurve(coefficients, points) {
+  return points.map(point => {
+    let y = 0;
+    for (let i = 0; i < coefficients.length; i++) {
+      y += coefficients[i] * Math.pow(point.x, coefficients.length - 1 - i); // Sum terms for y = mx + b
+    }
+    return { x: point.x, y: y };
+  });
+}
+
+// Calculate R² value for the regression
+function calculateRSquared(points, polynomialCurve) {
+  let meanY = points.reduce((sum, p) => sum + p.y, 0) / points.length;
+  let ssTotal = points.reduce((sum, p) => sum + Math.pow(p.y - meanY, 2), 0);
+  let ssResidual = points.reduce((sum, p, i) => sum + Math.pow(p.y - polynomialCurve[i].y, 2), 0);
+  return 1 - (ssResidual / ssTotal);
+}
