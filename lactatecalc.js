@@ -35,7 +35,15 @@ function initializeGraph() {
         label: 'Data Points',
         data: [],
         backgroundColor: 'black',
-        pointRadius: 5
+        pointRadius: 5,
+        regression: { 
+          type: 'polynomial', // Specify the regression type
+          order: 3,           // Specify the degree of the polynomial
+          line: {
+            color: 'red',
+            width: 2
+          }
+        }
       }]
     },
     options: {
@@ -83,13 +91,14 @@ function updateGraph() {
 
   if (dataPoints.length === 0) return;
 
+  // Sort the points to ensure the regression works correctly
   dataPoints.sort((a, b) => a.x - b.x);
 
-  // Update the dataset with new data points
+  // Update the chart with new data points
   chart.data.datasets[0].data = dataPoints;
 
-  // Add regression configuration
-  chart.data.datasets[0].regressions = {
+  // Trigger the regression calculation (the plugin will do this for you)
+  chart.data.datasets[0].regression = { 
     type: 'polynomial',
     order: 3,
     line: {
@@ -98,67 +107,10 @@ function updateGraph() {
     }
   };
 
-  // Update the chart title with R² value
-  const regressionResult = ChartRegressions.calculate(dataPoints, { type: 'polynomial', order: 3 });
-  const rSquared = regressionResult.r2;
+  // Update the title with the calculated R² value
+  const regressionResult = chart.data.datasets[0].regressionResult;
+  const rSquared = regressionResult ? regressionResult.r2 : 0;
   chart.options.plugins.title.text = `Lactate Threshold Curve (R²: ${rSquared.toFixed(4)})`;
 
   chart.update();
 }
-
-function polynomialRegression(points, degree) {
-  const xValues = points.map(p => p.x);
-  const yValues = points.map(p => p.y);
-  
-  const X = [];
-  for (let i = 0; i < points.length; i++) {
-    X[i] = [];
-    for (let j = 0; j <= degree; j++) {
-      X[i][j] = Math.pow(xValues[i], degree - j);
-    }
-  }
-
-  const Xt = math.transpose(X);
-  const XtX = math.multiply(Xt, X);
-  const XtY = math.multiply(Xt, yValues);
-  const coefficientsMatrix = math.lusolve(XtX, XtY);
-
-  const coefficients = coefficientsMatrix.map(row => row[0]);
-
-  return coefficients;
-}
-
-function generatePolynomialCurve(coefficients, points) {
-  const xValues = points.map(p => p.x);
-  const minX = Math.min(...xValues);
-  const maxX = Math.max(...xValues);
-  const step = (maxX - minX) / 100;
-  const curve = [];
-
-  for (let x = minX; x <= maxX; x += step) {
-    let y = 0;
-    for (let i = 0; i < coefficients.length; i++) {
-      y += coefficients[i] * Math.pow(x, coefficients.length - 1 - i);
-    }
-    curve.push({ x, y });
-  }
-
-  return curve;
-}
-
-function calculateRSquared(points, polynomialCurve) {
-  const meanY = points.reduce((sum, p) => sum + p.y, 0) / points.length;
-  const ssTotal = points.reduce((sum, p) => sum + Math.pow(p.y - meanY, 2), 0);
-
-  const interpolatedY = points.map(p => {
-    const closest = polynomialCurve.reduce((prev, curr) =>
-      Math.abs(curr.x - p.x) < Math.abs(prev.x - p.x) ? curr : prev
-    );
-    return closest.y;
-  });
-
-  const ssResidual = points.reduce((sum, p, i) => sum + Math.pow(p.y - interpolatedY[i], 2), 0);
-
-  return 1 - (ssResidual / ssTotal);
-}
-
