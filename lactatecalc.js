@@ -159,10 +159,11 @@ function polynomialRegression(points, degree) {
 function generatePolynomialCurve(coefficients, points) {
   let minX = Math.min(...points.map(p => p.x));
   let maxX = Math.max(...points.map(p => p.x));
-  let step = (maxX - minX) / 99;
+  // Increase interpolation resolution from 100 points to 1001 points:
+  let step = (maxX - minX) / 1000;
 
   let interpolatedPoints = [];
-  for (let i = 0; i <= 99; i++) {
+  for (let i = 0; i <= 1000; i++) {
     let x = minX + step * i;
     let y = 0;
     for (let j = 0; j < coefficients.length; j++) {
@@ -186,7 +187,7 @@ function pointToLineDistance(point, lineStart, lineEnd) {
   let x1 = lineStart.x, y1 = lineStart.y;
   let x2 = lineEnd.x, y2 = lineEnd.y;
 
-  let numerator = Math.abs((y2 - y1) * x0 - (x2 - x1) * y0 + x2*y1 - y2*x1);
+  let numerator = Math.abs((y2 - y1) * x0 - (x2 - x1) * y0 + x2 * y1 - y2 * x1);
   let denominator = Math.sqrt(Math.pow(y2 - y1, 2) + Math.pow(x2 - x1, 2));
 
   return numerator / denominator;
