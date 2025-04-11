@@ -124,7 +124,7 @@ function updateGraph() {
   }
 
   chart.options.plugins.title.text = 
-    `Lactate Threshold Curve (R²: ${rSquared.toFixed(4)} | DMAX: ${dmaxPoint?.x.toFixed(1) ?? 'N/A'} | DMAX MOD: ${dmaxModPoint?.x.toFixed(1) ?? 'N/A'})`;
+    `Lactate Threshold Curve (R²: ${rSquared.toFixed(4)} | DMAX: ${dmaxPoint?.x.toFixed(1)} / ${dmaxPoint?.y.toFixed(1)} | DMAX MOD: ${dmaxModPoint?.x.toFixed(1)} / ${dmaxModPoint?.y.toFixed(1)})`;
 
   chart.update();
 
@@ -199,7 +199,7 @@ function calculateDmax(dataPoints, polynomialCurve) {
     }
   }
 
-  return { dmax: maxDist, dmaxPoint };
+  return { dmax: maxDist, dmaxPoint: dmaxPoint }; // Return exact point with x and y
 }
 
 function calculateDmaxMod(dataPoints, polynomialCurve) {
@@ -233,5 +233,6 @@ function calculateDmaxMod(dataPoints, polynomialCurve) {
     }
   }
 
-  return { dmaxMod: maxDist, dmaxModPoint };
+  return { dmaxMod: maxDist, dmaxModPoint: dmaxModPoint }; // Return exact point with x and y
 }
+
