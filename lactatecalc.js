@@ -191,6 +191,7 @@ function calculateDmax(dataPoints, polynomialCurve) {
   let maxDist = -Infinity;
   let dmaxPoint = null;
 
+  // Iterate over the polynomial curve to find the point with the maximum distance to the line
   for (let point of polynomialCurve) {
     let dist = pointToLineDistance(point, lineStart, lineEnd);
     if (dist > maxDist) {
@@ -223,6 +224,7 @@ function calculateDmaxMod(dataPoints, polynomialCurve) {
   let maxDist = -Infinity;
   let dmaxModPoint = null;
 
+  // Iterate over the polynomial curve to find the DMAX MOD point
   for (let point of polynomialCurve) {
     if (point.x > lineStart.x) {
       let dist = pointToLineDistance(point, lineStart, lineEnd);
