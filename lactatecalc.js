@@ -3,13 +3,14 @@ let chart = null;
 function toggleTool() {
   let toolContainer = document.getElementById('tool-container');
   let isHidden = (toolContainer.style.display === 'none' || toolContainer.style.display === '');
-  
+
   toolContainer.style.display = isHidden ? 'flex' : 'none';
 
   if (isHidden && !chart) {
     initializeGraph();
   }
 
+  // Add a row if the tool is being shown and it's the first time
   if (isHidden && document.getElementById("data-table").getElementsByTagName('tbody')[0].children.length === 0) {
     addRow();
   }
@@ -20,9 +21,9 @@ function addRow() {
   let newRow = table.insertRow();
   let cell1 = newRow.insertCell(0);
   let cell2 = newRow.insertCell(1);
-  
-  cell1.innerHTML = '<input type="number" step="any" oninput="updateGraph()">'; 
-  cell2.innerHTML = '<input type="number" step="any" oninput="updateGraph()">'; 
+
+  cell1.innerHTML = '<input type="number" step="any" oninput="updateGraph()">';
+  cell2.innerHTML = '<input type="number" step="any" oninput="updateGraph()">';
 }
 
 function initializeGraph() {
@@ -98,42 +99,18 @@ function updateGraph() {
   let polynomialCurve = generatePolynomialCurve(coefficients, dataPoints);
   let rSquared = calculateRSquared(dataPoints, polynomialCurve);
 
-  let { dmax, dmaxPoint } = calculateDmax(dataPoints, polynomialCurve);
-  let { dmaxMod, dmaxModPoint } = calculateDmaxMod(dataPoints, polynomialCurve);
-
-  chart.data.datasets = chart.data.datasets.slice(0, 2); // Reset to only data points and curve
   chart.data.datasets[0].data = [...dataPoints];
   chart.data.datasets[1].data = [...polynomialCurve];
 
-  if (dmaxPoint) {
-    chart.data.datasets.push({
-      label: 'DMAX Point',
-      backgroundColor: 'blue',
-      pointRadius: 6,
-      data: [dmaxPoint]
-    });
-  }
-
-  if (dmaxModPoint) {
-    chart.data.datasets.push({
-      label: 'DMAX MOD Point',
-      backgroundColor: 'green',
-      pointRadius: 6,
-      data: [dmaxModPoint]
-    });
-  }
-
-  chart.options.plugins.title.text = 
-    `Lactate Threshold Curve (R²: ${rSquared.toFixed(4)} | DMAX: ${dmaxPoint?.x.toFixed(2) ?? 'N/A'} | DMAX MOD: ${dmaxModPoint?.x.toFixed(2) ?? 'N/A'})`;
+  chart.options.plugins.title.text = `Lactate Threshold Curve (R²: ${rSquared.toFixed(4)})`;
 
   chart.update();
 
-  console.log(`DMAX: ${dmax.toFixed(4)} at Load ${dmaxPoint?.x.toFixed(2)}, Lactate ${dmaxPoint?.y.toFixed(2)}`);
-  if (dmaxModPoint) {
-    console.log(`DMAX MOD: ${dmaxMod.toFixed(4)} at Load ${dmaxModPoint.x.toFixed(2)}, Lactate ${dmaxModPoint.y.toFixed(2)}`);
-  } else {
-    console.log('DMAX MOD: Not found (no sufficient lactate rise > 0.4 mmol/L)');
-  }
+  const dmax = calculateDmax(dataPoints, polynomialCurve);
+  const dmaxMod = calculateDmaxMod(dataPoints, polynomialCurve);
+
+  console.log("DMAX:", dmax);
+  console.log("DMAX MOD:", dmaxMod);
 }
 
 function polynomialRegression(points, degree) {
@@ -156,14 +133,21 @@ function polynomialRegression(points, degree) {
   return coefficients;
 }
 
-function generatePolynomialCurve(coefficients, points) {
-  return points.map(point => {
+function generatePolynomialCurve(coefficients, dataPoints) {
+  const minX = Math.min(...dataPoints.map(p => p.x));
+  const maxX = Math.max(...dataPoints.map(p => p.x));
+  const curve = [];
+
+  for (let i = 0; i <= 1000; i++) {
+    const x = minX + i * (maxX - minX) / 1000;
     let y = 0;
-    for (let i = 0; i < coefficients.length; i++) {
-      y += coefficients[i][0] * Math.pow(point.x, coefficients.length - 1 - i);
+    for (let j = 0; j < coefficients.length; j++) {
+      y += coefficients[j][0] * Math.pow(x, coefficients.length - 1 - j);
     }
-    return { x: point.x, y: y };
-  });
+    curve.push({ x, y });
+  }
+
+  return curve;
 }
 
 function calculateRSquared(points, polynomialCurve) {
@@ -173,65 +157,61 @@ function calculateRSquared(points, polynomialCurve) {
   return 1 - (ssResidual / ssTotal);
 }
 
-function pointToLineDistance(point, lineStart, lineEnd) {
-  let x0 = point.x, y0 = point.y;
-  let x1 = lineStart.x, y1 = lineStart.y;
-  let x2 = lineEnd.x, y2 = lineEnd.y;
+function calculateDmax(dataPoints, curve) {
+  const start = dataPoints[0];
+  const end = dataPoints[dataPoints.length - 1];
 
-  let numerator = Math.abs((y2 - y1) * x0 - (x2 - x1) * y0 + x2*y1 - y2*x1);
-  let denominator = Math.sqrt(Math.pow(y2 - y1, 2) + Math.pow(x2 - x1, 2));
+  let maxDistance = -Infinity;
+  let dmaxX = null;
 
-  return numerator / denominator;
-}
-
-function calculateDmax(dataPoints, polynomialCurve) {
-  const lineStart = polynomialCurve[0];
-  const lineEnd = polynomialCurve[polynomialCurve.length - 1];
-
-  let maxDist = -Infinity;
-  let dmaxPoint = null;
-
-  for (let point of polynomialCurve) {
-    let dist = pointToLineDistance(point, lineStart, lineEnd);
-    if (dist > maxDist) {
-      maxDist = dist;
-      dmaxPoint = point;
+  for (let point of curve) {
+    let d = perpendicularDistance(point, start, end);
+    if (d > maxDistance) {
+      maxDistance = d;
+      dmaxX = point.x;
     }
   }
 
-  return { dmax: maxDist, dmaxPoint };
+  return dmaxX;
 }
 
-function calculateDmaxMod(dataPoints, polynomialCurve) {
-  if (dataPoints.length < 3) return { dmaxMod: null, dmaxModPoint: null };
+function calculateDmaxMod(dataPoints, curve) {
+  const threshold = 0.4;
+  let startIndex = -1;
 
-  let idx = -1;
   for (let i = 1; i < dataPoints.length; i++) {
-    if ((dataPoints[i].y - dataPoints[i - 1].y) > 0.4) {
-      idx = i - 1;
+    if (dataPoints[i].y - dataPoints[i - 1].y > threshold) {
+      startIndex = i - 1;
       break;
     }
   }
 
-  if (idx === -1) return { dmaxMod: null, dmaxModPoint: null };
+  if (startIndex === -1) return null;
 
-  const lineStart = polynomialCurve.find(p => p.x === dataPoints[idx].x);
-  const lineEnd = polynomialCurve[polynomialCurve.length - 1];
+  const start = dataPoints[startIndex];
+  const end = dataPoints[dataPoints.length - 1];
 
-  if (!lineStart || !lineEnd) return { dmaxMod: null, dmaxModPoint: null };
+  let maxDistance = -Infinity;
+  let dmaxModX = null;
 
-  let maxDist = -Infinity;
-  let dmaxModPoint = null;
-
-  for (let point of polynomialCurve) {
-    if (point.x > lineStart.x) {
-      let dist = pointToLineDistance(point, lineStart, lineEnd);
-      if (dist > maxDist) {
-        maxDist = dist;
-        dmaxModPoint = point;
-      }
+  for (let point of curve) {
+    let d = perpendicularDistance(point, start, end);
+    if (d > maxDistance) {
+      maxDistance = d;
+      dmaxModX = point.x;
     }
   }
 
-  return { dmaxMod: maxDist, dmaxModPoint };
+  return dmaxModX;
+}
+
+function perpendicularDistance(point, lineStart, lineEnd) {
+  const x0 = point.x, y0 = point.y;
+  const x1 = lineStart.x, y1 = lineStart.y;
+  const x2 = lineEnd.x, y2 = lineEnd.y;
+
+  const numerator = Math.abs((y2 - y1) * x0 - (x2 - x1) * y0 + x2*y1 - y2*x1);
+  const denominator = Math.sqrt(Math.pow(y2 - y1, 2) + Math.pow(x2 - x1, 2));
+
+  return numerator / denominator;
 }
