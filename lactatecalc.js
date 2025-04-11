@@ -157,13 +157,21 @@ function polynomialRegression(points, degree) {
 }
 
 function generatePolynomialCurve(coefficients, points) {
-  return points.map(point => {
+  let minX = Math.min(...points.map(p => p.x));
+  let maxX = Math.max(...points.map(p => p.x));
+  let step = (maxX - minX) / 99;
+
+  let interpolatedPoints = [];
+  for (let i = 0; i <= 99; i++) {
+    let x = minX + step * i;
     let y = 0;
-    for (let i = 0; i < coefficients.length; i++) {
-      y += coefficients[i][0] * Math.pow(point.x, coefficients.length - 1 - i);
+    for (let j = 0; j < coefficients.length; j++) {
+      y += coefficients[j][0] * Math.pow(x, coefficients.length - 1 - j);
     }
-    return { x: point.x, y: y };
-  });
+    interpolatedPoints.push({ x, y });
+  }
+
+  return interpolatedPoints;
 }
 
 function calculateRSquared(points, polynomialCurve) {
@@ -216,7 +224,7 @@ function calculateDmaxMod(dataPoints, polynomialCurve) {
 
   if (idx === -1) return { dmaxMod: null, dmaxModPoint: null };
 
-  const lineStart = polynomialCurve.find(p => p.x === dataPoints[idx].x);
+  const lineStart = polynomialCurve.find(p => p.x >= dataPoints[idx].x);
   const lineEnd = polynomialCurve[polynomialCurve.length - 1];
 
   if (!lineStart || !lineEnd) return { dmaxMod: null, dmaxModPoint: null };
@@ -237,4 +245,3 @@ function calculateDmaxMod(dataPoints, polynomialCurve) {
 
   return { dmaxMod: maxDist, dmaxModPoint: dmaxModPoint }; // Return exact point with x and y
 }
-
