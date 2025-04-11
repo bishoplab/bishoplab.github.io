@@ -130,6 +130,11 @@ function polynomialRegression(dataPoints, degree) {
   return coefficients;
 }
 
+function toggleTool() {
+  const toolContainer = document.getElementById('tool-container');
+  toolContainer.style.display = toolContainer.style.display === 'none' ? 'block' : 'none';
+}
+
 function generatePolynomialCurve(coefficients, dataPoints) {
   return dataPoints.map((point) => {
     let y = coefficients[0] + coefficients[1] * point.x + coefficients[2] * point.x * point.x + coefficients[3] * point.x * point.x * point.x;
