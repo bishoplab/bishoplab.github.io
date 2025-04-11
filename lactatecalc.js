@@ -3,7 +3,7 @@ let chart = null;
 function toggleTool() {
   const toolContainer = document.getElementById('tool-container');
   const isHidden = (toolContainer.style.display === 'none' || toolContainer.style.display === '');
-  
+
   toolContainer.style.display = isHidden ? 'flex' : 'none';
 
   if (isHidden && !chart) {
@@ -36,14 +36,6 @@ function initializeGraph() {
         data: [],
         backgroundColor: 'black',
         pointRadius: 5,
-        regression: { 
-          type: 'polynomial', // Specify the regression type
-          order: 3,           // Specify the degree of the polynomial
-          line: {
-            color: 'red',
-            width: 2
-          }
-        }
       }]
     },
     options: {
@@ -79,6 +71,7 @@ function updateGraph() {
 
   const dataPoints = [];
 
+  // Loop through each row in the table and extract data
   for (let row of rows) {
     const inputs = row.getElementsByTagName('input');
     const x = parseFloat(inputs[0].value);
@@ -89,16 +82,17 @@ function updateGraph() {
     }
   }
 
+  // If no data points, exit
   if (dataPoints.length === 0) return;
 
-  // Sort the points to ensure the regression works correctly
+  // Sort the data points by x (Load) for proper regression calculation
   dataPoints.sort((a, b) => a.x - b.x);
 
   // Update the chart with new data points
   chart.data.datasets[0].data = dataPoints;
 
-  // Trigger the regression calculation (the plugin will do this for you)
-  chart.data.datasets[0].regression = { 
+  // Update the regression line and title (ChartRegressions plugin will handle the regression)
+  chart.data.datasets[0].regression = {
     type: 'polynomial',
     order: 3,
     line: {
@@ -107,10 +101,11 @@ function updateGraph() {
     }
   };
 
-  // Update the title with the calculated R² value
+  // Update chart title with R² value (calculated by the regression plugin)
   const regressionResult = chart.data.datasets[0].regressionResult;
   const rSquared = regressionResult ? regressionResult.r2 : 0;
   chart.options.plugins.title.text = `Lactate Threshold Curve (R²: ${rSquared.toFixed(4)})`;
 
+  // Redraw the chart with updated data
   chart.update();
 }
