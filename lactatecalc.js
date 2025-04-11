@@ -31,34 +31,17 @@ function initializeGraph() {
   chart = new Chart(ctx, {
     type: 'scatter',
     data: {
-      datasets: [
-        {
-          label: 'Data Points',
-          borderColor: 'transparent',
-          backgroundColor: 'black',
-          pointRadius: 5,
-          data: []
-        },
-        {
-          label: 'Polynomial Fit',
-          borderColor: 'red',
-          backgroundColor: 'transparent',
-          fill: false,
-          showLine: true,
-          tension: 0.4,
-          borderWidth: 2,
-          pointRadius: 0,
-          data: []
-        }
-      ]
+      datasets: [{
+        label: 'Data Points',
+        data: [],
+        backgroundColor: 'black',
+        pointRadius: 5
+      }]
     },
     options: {
       responsive: true,
-      maintainAspectRatio: true,
-      aspectRatio: 1,
       plugins: {
-        legend: { display: false },
-        tooltip: { enabled: false },
+        legend: { display: true },
         title: {
           display: true,
           text: 'Lactate Threshold Curve (R²: )',
@@ -66,10 +49,17 @@ function initializeGraph() {
         }
       },
       scales: {
-        x: { title: { display: true, text: 'Load' }, min: 0 },
-        y: { title: { display: true, text: 'Lactate Concentration' }, min: 0 }
+        x: {
+          title: { display: true, text: 'Load' },
+          min: 0
+        },
+        y: {
+          title: { display: true, text: 'Lactate Concentration' },
+          min: 0
+        }
       }
-    }
+    },
+    plugins: [ChartRegressions] // Register the regression plugin
   });
 }
 
@@ -81,7 +71,7 @@ function updateGraph() {
 
   const dataPoints = [];
 
-  for (const row of rows) {
+  for (let row of rows) {
     const inputs = row.getElementsByTagName('input');
     const x = parseFloat(inputs[0].value);
     const y = parseFloat(inputs[1].value);
@@ -95,14 +85,22 @@ function updateGraph() {
 
   dataPoints.sort((a, b) => a.x - b.x);
 
-  const coefficients = polynomialRegression(dataPoints, 3);
-  const polynomialCurve = generatePolynomialCurve(coefficients, dataPoints);
+  // Update the dataset with new data points
+  chart.data.datasets[0].data = dataPoints;
 
-  const rSquared = calculateRSquared(dataPoints, polynomialCurve);
+  // Add regression configuration
+  chart.data.datasets[0].regressions = {
+    type: 'polynomial',
+    order: 3,
+    line: {
+      color: 'red',
+      width: 2
+    }
+  };
 
-  chart.data.datasets[0].data = [...dataPoints];
-  chart.data.datasets[1].data = [...polynomialCurve];
-
+  // Update the chart title with R² value
+  const regressionResult = ChartRegressions.calculate(dataPoints, { type: 'polynomial', order: 3 });
+  const rSquared = regressionResult.r2;
   chart.options.plugins.title.text = `Lactate Threshold Curve (R²: ${rSquared.toFixed(4)})`;
 
   chart.update();
