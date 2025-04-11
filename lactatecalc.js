@@ -3,7 +3,7 @@ let chart = null;
 function toggleTool() {
   let toolContainer = document.getElementById('tool-container');
   let isHidden = (toolContainer.style.display === 'none' || toolContainer.style.display === '');
-
+  
   toolContainer.style.display = isHidden ? 'flex' : 'none';
 
   if (isHidden && !chart) {
@@ -21,9 +21,9 @@ function addRow() {
   let newRow = table.insertRow();
   let cell1 = newRow.insertCell(0);
   let cell2 = newRow.insertCell(1);
-
-  cell1.innerHTML = '<input type="number" step="any" oninput="updateGraph()">';
-  cell2.innerHTML = '<input type="number" step="any" oninput="updateGraph()">';
+  
+  cell1.innerHTML = '<input type="number" step="any" oninput="updateGraph()">'; 
+  cell2.innerHTML = '<input type="number" step="any" oninput="updateGraph()">'; 
 }
 
 function initializeGraph() {
@@ -34,29 +34,29 @@ function initializeGraph() {
     data: {
       datasets: [{
         label: 'Data Points',
-        borderColor: 'transparent',
+        borderColor: 'transparent', // No line connecting data points
         backgroundColor: 'black',
         pointRadius: 5,
-        data: []
+        data: [] // Start empty, but will be populated with the points
       }, {
         label: 'Polynomial Fit',
         borderColor: 'red',
         backgroundColor: 'transparent',
         fill: false,
         showLine: true,
-        tension: 0.4,
+        tension: 0.4, // Smooth the line (non-zero value for smooth curve)
         borderWidth: 2,
-        pointRadius: 0,
-        data: []
+        pointRadius: 0, // No points on the curve
+        data: [] // Polynomial curve data, initially empty
       }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: true,
-      aspectRatio: 1,
+      aspectRatio: 1, // Set aspect ratio to 1 to prevent stretching
       plugins: {
         legend: { display: false },
-        tooltip: { enabled: false },
+        tooltip: { enabled: false }, // Disable tooltip as it's not needed for this chart
         title: {
           display: true,
           text: 'Lactate Threshold Curve (R²: )',
@@ -91,32 +91,41 @@ function updateGraph() {
     }
   }
 
+  console.log("Data Points:", dataPoints); // Debugging output
+
   if (dataPoints.length === 0) return;
 
-  dataPoints.sort((a, b) => a.x - b.x);
+  dataPoints.sort((a, b) => a.x - b.x); // Sort by x-value for the curve fitting
 
+  // Polynomial regression (3rd-order) to fit a curve
   let coefficients = polynomialRegression(dataPoints, 3);
   let polynomialCurve = generatePolynomialCurve(coefficients, dataPoints);
+
+  // Calculate R² value
   let rSquared = calculateRSquared(dataPoints, polynomialCurve);
 
-  chart.data.datasets[0].data = [...dataPoints];
-  chart.data.datasets[1].data = [...polynomialCurve];
+  // Update chart with data points and polynomial curve
+  chart.data.datasets[0].data = [...dataPoints]; // Ensure black dots appear
+  chart.data.datasets[1].data = [...polynomialCurve]; // Red polynomial line (smooth)
 
+  // Update the title with the R² value
   chart.options.plugins.title.text = `Lactate Threshold Curve (R²: ${rSquared.toFixed(4)})`;
 
-  chart.update();
-
-  const dmax = calculateDmax(dataPoints, polynomialCurve);
-  const dmaxMod = calculateDmaxMod(dataPoints, polynomialCurve);
-
+  // Calculate DMAX and DMAX MOD
+  const dmax = calculateDmax(dataPoints, coefficients);
+  const dmaxMod = calculateDmaxMod(dataPoints, coefficients);
   console.log("DMAX:", dmax);
   console.log("DMAX MOD:", dmaxMod);
+
+  chart.update();
 }
 
+// Polynomial Regression (3rd-order)
 function polynomialRegression(points, degree) {
   let xValues = points.map(p => p.x);
   let yValues = points.map(p => p.y);
-
+  
+  // Constructing the Vandermonde matrix (X matrix) and the Y vector
   let X = [];
   for (let i = 0; i < points.length; i++) {
     X[i] = [];
@@ -124,7 +133,8 @@ function polynomialRegression(points, degree) {
       X[i][j] = Math.pow(xValues[i], degree - j);
     }
   }
-
+  
+  // Solving for the polynomial coefficients using least squares
   let Xt = math.transpose(X);
   let XtX = math.multiply(Xt, X);
   let XtY = math.multiply(Xt, yValues);
@@ -133,6 +143,7 @@ function polynomialRegression(points, degree) {
   return coefficients;
 }
 
+// Generate y-values for the polynomial curve based on the fitted coefficients
 function generatePolynomialCurve(coefficients, dataPoints) {
   const minX = Math.min(...dataPoints.map(p => p.x));
   const maxX = Math.max(...dataPoints.map(p => p.x));
@@ -150,6 +161,7 @@ function generatePolynomialCurve(coefficients, dataPoints) {
   return curve;
 }
 
+// Calculate R² value for the regression
 function calculateRSquared(points, polynomialCurve) {
   let meanY = points.reduce((sum, p) => sum + p.y, 0) / points.length;
   let ssTotal = points.reduce((sum, p) => sum + Math.pow(p.y - meanY, 2), 0);
@@ -157,17 +169,27 @@ function calculateRSquared(points, polynomialCurve) {
   return 1 - (ssResidual / ssTotal);
 }
 
-function calculateDmax(dataPoints, curve) {
+// Perpendicular distance from a point to a line defined by two points
+function perpendicularDistance(point, start, end) {
+  let numerator = Math.abs((end.y - start.y) * point.x - (end.x - start.x) * point.y + end.x * start.y - end.y * start.x);
+  let denominator = Math.sqrt(Math.pow(end.y - start.y, 2) + Math.pow(end.x - start.x, 2));
+  return numerator / denominator;
+}
+
+// Calculate DMAX (max perpendicular distance)
+function calculateDmax(dataPoints, coefficients) {
   const start = dataPoints[0];
   const end = dataPoints[dataPoints.length - 1];
+
+  const curve = generatePolynomialCurve(coefficients, dataPoints);
 
   let maxDistance = -Infinity;
   let dmaxX = null;
 
-  for (let point of curve) {
-    let d = perpendicularDistance(point, start, end);
-    if (d > maxDistance) {
-      maxDistance = d;
+  for (const point of curve) {
+    const dist = perpendicularDistance(point, start, end);
+    if (dist > maxDistance) {
+      maxDistance = dist;
       dmaxX = point.x;
     }
   }
@@ -175,7 +197,8 @@ function calculateDmax(dataPoints, curve) {
   return dmaxX;
 }
 
-function calculateDmaxMod(dataPoints, curve) {
+// Calculate DMAX MOD (modified max perpendicular distance)
+function calculateDmaxMod(dataPoints, coefficients) {
   const threshold = 0.4;
   let startIndex = -1;
 
@@ -191,27 +214,18 @@ function calculateDmaxMod(dataPoints, curve) {
   const start = dataPoints[startIndex];
   const end = dataPoints[dataPoints.length - 1];
 
+  const curve = generatePolynomialCurve(coefficients, dataPoints);
+
   let maxDistance = -Infinity;
   let dmaxModX = null;
 
-  for (let point of curve) {
-    let d = perpendicularDistance(point, start, end);
-    if (d > maxDistance) {
-      maxDistance = d;
+  for (const point of curve) {
+    const dist = perpendicularDistance(point, start, end);
+    if (dist > maxDistance) {
+      maxDistance = dist;
       dmaxModX = point.x;
     }
   }
 
   return dmaxModX;
-}
-
-function perpendicularDistance(point, lineStart, lineEnd) {
-  const x0 = point.x, y0 = point.y;
-  const x1 = lineStart.x, y1 = lineStart.y;
-  const x2 = lineEnd.x, y2 = lineEnd.y;
-
-  const numerator = Math.abs((y2 - y1) * x0 - (x2 - x1) * y0 + x2*y1 - y2*x1);
-  const denominator = Math.sqrt(Math.pow(y2 - y1, 2) + Math.pow(x2 - x1, 2));
-
-  return numerator / denominator;
 }
