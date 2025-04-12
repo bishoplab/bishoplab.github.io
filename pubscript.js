@@ -6,12 +6,13 @@ let loadedCount = 0;
 const loadStep = 30; // Number of publications to load initially & on scroll
 let filteredPublications = []; // Stores the filtered publications
 
-// Function to fetch publications from Scopus API
+// In fetchScopusPublications
 async function fetchScopusPublications(authorId) {
     const url = `https://api.elsevier.com/content/search/scopus?query=AU-ID(${authorId})&apiKey=${API_KEY}&httpAccept=application/json&count=100`;
 
     try {
-        const response = await fetch(url, { method: "GET" });
+        const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+        const response = await fetch(proxyUrl + url, { method: "GET" });
         if (!response.ok) throw new Error(`Scopus API error: ${response.status}`);
 
         const data = await response.json();
@@ -23,7 +24,7 @@ async function fetchScopusPublications(authorId) {
             journal: entry["prism:publicationName"] || "N/A",
             doi: entry["prism:doi"] || "#",
             eid: entry["eid"],
-            keywords: entry["authkeywords"] || [] // Assume keywords are available
+            keywords: entry["authkeywords"] || []
         }));
     } catch (error) {
         console.warn(`Scopus fetch failed for Author ID: ${authorId}`, error);
@@ -31,12 +32,14 @@ async function fetchScopusPublications(authorId) {
     }
 }
 
-// Function to fetch authors associated with the publication
+
+// In fetchAuthors
 async function fetchAuthors(eid) {
     const url = `https://api.elsevier.com/content/abstract/eid/${eid}?apiKey=${API_KEY}&httpAccept=application/json`;
 
     try {
-        const response = await fetch(url, { method: "GET" });
+        const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+        const response = await fetch(proxyUrl + url, { method: "GET" });
         if (!response.ok) throw new Error(`Scopus API error: ${response.status}`);
 
         const data = await response.json();
