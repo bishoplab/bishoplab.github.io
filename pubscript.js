@@ -3,25 +3,22 @@ const scopusIds = ["57196098200", "7401913619", "57426146300", "23501819100"]; /
 
 let allPublications = [];
 let loadedCount = 0;
-const loadStep = 30; // Number of publications to load initially & on scroll
-let filteredPublications = []; // Stores the filtered publications
+const loadStep = 30;
+let filteredPublications = [];
 
-// === SET YOUR PROXY HERE ===
-const proxyUrl = 'https://cors-anywhere.herokuapp.com/'; // For dev only
-// const proxyUrl = 'https://your-own-backend.com/api?url='; // Recommended for production
-
-// === ACTIVATE cors-anywhere for dev use ===
-fetch(proxyUrl).catch(() => {
-    alert("⚠️ Please visit https://cors-anywhere.herokuapp.com/corsdemo and click 'Request temporary access' before loading.");
-});
-
-// === Fetch Scopus publications for an author ===
 async function fetchScopusPublications(authorId) {
-    const url = `https://api.elsevier.com/content/search/scopus?query=AU-ID(${authorId})&apiKey=${API_KEY}&httpAccept=application/json&count=100`;
+    const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+    const query = `AU-ID(${authorId})`;
+    const url = `https://api.elsevier.com/content/search/scopus?query=${encodeURIComponent(query)}&apiKey=${API_KEY}&httpAccept=application/json&count=100`;
 
     try {
-        const response = await fetch(proxyUrl + url);
-        if (!response.ok) throw new Error(`Scopus API error: ${response.status}`);
+        console.log("Fetching Scopus publications:", proxyUrl + url);
+        const response = await fetch(proxyUrl + url, { method: "GET" });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Scopus API error: ${response.status} - ${errorText}`);
+        }
 
         const data = await response.json();
         const entries = data?.["search-results"]?.entry || [];
@@ -32,7 +29,7 @@ async function fetchScopusPublications(authorId) {
             journal: entry["prism:publicationName"] || "N/A",
             doi: entry["prism:doi"] || "#",
             eid: entry["eid"],
-            keywords: entry["authkeywords"] ? entry["authkeywords"].split("|") : []
+            keywords: entry["authkeywords"] || []
         }));
     } catch (error) {
         console.warn(`Scopus fetch failed for Author ID: ${authorId}`, error);
@@ -40,13 +37,18 @@ async function fetchScopusPublications(authorId) {
     }
 }
 
-// === Fetch authors for a publication ===
 async function fetchAuthors(eid) {
+    const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
     const url = `https://api.elsevier.com/content/abstract/eid/${eid}?apiKey=${API_KEY}&httpAccept=application/json`;
 
     try {
-        const response = await fetch(proxyUrl + url);
-        if (!response.ok) throw new Error(`Scopus API error: ${response.status}`);
+        console.log("Fetching authors:", proxyUrl + url);
+        const response = await fetch(proxyUrl + url, { method: "GET" });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Scopus API error: ${response.status} - ${errorText}`);
+        }
 
         const data = await response.json();
         const authors = data?.["abstracts-retrieval-response"]?.["authors"]?.["author"] || [];
@@ -61,7 +63,6 @@ async function fetchAuthors(eid) {
     }
 }
 
-// === Fetch all publications for all author IDs ===
 async function fetchPublications(scopusIds) {
     document.getElementById("publications").innerHTML = "<p>Loading publications...</p>";
     const publicationsMap = new Map();
@@ -71,6 +72,7 @@ async function fetchPublications(scopusIds) {
 
         for (const pub of publications) {
             const key = `${pub.title}_${pub.year}`;
+
             if (!publicationsMap.has(key)) {
                 pub.authors = await fetchAuthors(pub.eid);
                 publicationsMap.set(key, pub);
@@ -98,22 +100,24 @@ async function fetchPublications(scopusIds) {
     loadMorePublications();
 }
 
-// === Load publications on scroll ===
 function loadMorePublications() {
-    const container = document.getElementById("publications");
+    const publicationsContainer = document.getElementById("publications");
 
     for (let i = loadedCount; i < loadedCount + loadStep && i < filteredPublications.length; i++) {
         const pub = filteredPublications[i];
 
         const authorList = Array.from(new Set(pub.authors.map(a => a.name)));
-        const formattedAuthors = authorList.map(name => {
-            const authorObj = pub.authors.find(a => a.name === name);
-            return scopusIds.includes(authorObj?.scopusId) ? `<strong>${name}</strong>` : name;
-        }).join(", ");
+        const formattedAuthors = authorList
+            .map(name => {
+                const authorObj = pub.authors.find(a => a.name === name);
+                return scopusIds.includes(authorObj?.scopusId) ? `<strong>${name}</strong>` : name;
+            })
+            .join(", ");
 
-        const div = document.createElement("div");
-        div.classList.add("publication");
-        div.innerHTML = `
+        const publicationDiv = document.createElement("div");
+        publicationDiv.classList.add("publication");
+
+        publicationDiv.innerHTML = `
             <h3 style="font-size: 14px; margin: 0 0 5px;">
                 <a href="https://doi.org/${pub.doi}" target="_blank" style="text-decoration: none; color: #0077cc;">${pub.title}</a>
             </h3>
@@ -121,18 +125,18 @@ function loadMorePublications() {
             <p style="font-size: 12px; margin: 2px 0;"><strong>Journal:</strong> ${pub.journal}</p>
             <p style="font-size: 12px; margin: 2px 0;"><strong>Authors:</strong> ${formattedAuthors}</p>
         `;
-        container.appendChild(div);
+
+        publicationsContainer.appendChild(publicationDiv);
     }
 
     loadedCount += loadStep;
 }
 
-// === Keyword filter change handler ===
 document.getElementById("keywordFilter").addEventListener("change", (event) => {
     const selectedKeyword = event.target.value.toLowerCase();
-
+    
     if (selectedKeyword) {
-        filteredPublications = allPublications.filter(pub =>
+        filteredPublications = allPublications.filter(pub => 
             pub.keywords.some(keyword => keyword.toLowerCase().includes(selectedKeyword)) ||
             pub.title.toLowerCase().includes(selectedKeyword)
         );
@@ -145,19 +149,20 @@ document.getElementById("keywordFilter").addEventListener("change", (event) => {
     loadMorePublications();
 });
 
-// === Infinite scroll setup ===
 function setupInfiniteScroll() {
-    window.onscroll = function () {
+    window.onscroll = function() {
         const scrollHeight = document.documentElement.scrollHeight;
         const scrollPosition = window.innerHeight + window.scrollY;
 
-        if (scrollHeight - scrollPosition < 100 && loadedCount < filteredPublications.length) {
-            loadMorePublications();
+        if (scrollHeight - scrollPosition < 100) {
+            if (loadedCount < filteredPublications.length) {
+                loadMorePublications();
+            }
         }
     };
 }
 
-// === Run everything ===
 fetchPublications(scopusIds);
 setupInfiniteScroll();
+
 
