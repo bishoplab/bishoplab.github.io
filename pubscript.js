@@ -1,4 +1,4 @@
-const API_KEY = '4d618297882a2333551de5190542171d'; // Replace with your Elsevier API Key
+const API_KEY = '7cd67f1576712652d3d4c314da1c31c5'; // Replace with your Elsevier API Key
 const scopusIds = ["57196098200", "7401913619", "57426146300", "23501819100"]; // Replace with actual Scopus Author IDs
 
 let allPublications = [];
