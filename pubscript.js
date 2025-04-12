@@ -6,13 +6,21 @@ let loadedCount = 0;
 const loadStep = 30; // Number of publications to load initially & on scroll
 let filteredPublications = []; // Stores the filtered publications
 
-// In fetchScopusPublications
+// === SET YOUR PROXY HERE ===
+const proxyUrl = 'https://cors-anywhere.herokuapp.com/'; // For dev only
+// const proxyUrl = 'https://your-own-backend.com/api?url='; // Recommended for production
+
+// === ACTIVATE cors-anywhere for dev use ===
+fetch(proxyUrl).catch(() => {
+    alert("⚠️ Please visit https://cors-anywhere.herokuapp.com/corsdemo and click 'Request temporary access' before loading.");
+});
+
+// === Fetch Scopus publications for an author ===
 async function fetchScopusPublications(authorId) {
     const url = `https://api.elsevier.com/content/search/scopus?query=AU-ID(${authorId})&apiKey=${API_KEY}&httpAccept=application/json&count=100`;
 
     try {
-        const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
-        const response = await fetch(proxyUrl + url, { method: "GET" });
+        const response = await fetch(proxyUrl + url);
         if (!response.ok) throw new Error(`Scopus API error: ${response.status}`);
 
         const data = await response.json();
@@ -24,7 +32,7 @@ async function fetchScopusPublications(authorId) {
             journal: entry["prism:publicationName"] || "N/A",
             doi: entry["prism:doi"] || "#",
             eid: entry["eid"],
-            keywords: entry["authkeywords"] || []
+            keywords: entry["authkeywords"] ? entry["authkeywords"].split("|") : []
         }));
     } catch (error) {
         console.warn(`Scopus fetch failed for Author ID: ${authorId}`, error);
@@ -32,14 +40,12 @@ async function fetchScopusPublications(authorId) {
     }
 }
 
-
-// In fetchAuthors
+// === Fetch authors for a publication ===
 async function fetchAuthors(eid) {
     const url = `https://api.elsevier.com/content/abstract/eid/${eid}?apiKey=${API_KEY}&httpAccept=application/json`;
 
     try {
-        const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
-        const response = await fetch(proxyUrl + url, { method: "GET" });
+        const response = await fetch(proxyUrl + url);
         if (!response.ok) throw new Error(`Scopus API error: ${response.status}`);
 
         const data = await response.json();
@@ -55,7 +61,7 @@ async function fetchAuthors(eid) {
     }
 }
 
-// Function to fetch all publications and store them
+// === Fetch all publications for all author IDs ===
 async function fetchPublications(scopusIds) {
     document.getElementById("publications").innerHTML = "<p>Loading publications...</p>";
     const publicationsMap = new Map();
@@ -65,7 +71,6 @@ async function fetchPublications(scopusIds) {
 
         for (const pub of publications) {
             const key = `${pub.title}_${pub.year}`;
-
             if (!publicationsMap.has(key)) {
                 pub.authors = await fetchAuthors(pub.eid);
                 publicationsMap.set(key, pub);
@@ -79,8 +84,8 @@ async function fetchPublications(scopusIds) {
     }
 
     allPublications = Array.from(publicationsMap.values())
-        .filter(pub => pub.year !== "N/A")  // Ensure we exclude "N/A" years from sorting
-        .sort((a, b) => parseInt(b.year) - parseInt(a.year)); // Sort from newest to oldest
+        .filter(pub => pub.year !== "N/A")
+        .sort((a, b) => parseInt(b.year) - parseInt(a.year));
 
     document.getElementById("publications").innerHTML = "";
 
@@ -89,29 +94,26 @@ async function fetchPublications(scopusIds) {
         return;
     }
 
-    filteredPublications = allPublications; // Initialize filtered list
+    filteredPublications = allPublications;
     loadMorePublications();
 }
 
-// Function to load more publications, based on filtered results
+// === Load publications on scroll ===
 function loadMorePublications() {
-    const publicationsContainer = document.getElementById("publications");
+    const container = document.getElementById("publications");
 
     for (let i = loadedCount; i < loadedCount + loadStep && i < filteredPublications.length; i++) {
         const pub = filteredPublications[i];
 
         const authorList = Array.from(new Set(pub.authors.map(a => a.name)));
-        const formattedAuthors = authorList
-            .map(name => {
-                const authorObj = pub.authors.find(a => a.name === name);
-                return scopusIds.includes(authorObj?.scopusId) ? `<strong>${name}</strong>` : name;
-            })
-            .join(", ");
+        const formattedAuthors = authorList.map(name => {
+            const authorObj = pub.authors.find(a => a.name === name);
+            return scopusIds.includes(authorObj?.scopusId) ? `<strong>${name}</strong>` : name;
+        }).join(", ");
 
-        const publicationDiv = document.createElement("div");
-        publicationDiv.classList.add("publication");
-
-        publicationDiv.innerHTML = `
+        const div = document.createElement("div");
+        div.classList.add("publication");
+        div.innerHTML = `
             <h3 style="font-size: 14px; margin: 0 0 5px;">
                 <a href="https://doi.org/${pub.doi}" target="_blank" style="text-decoration: none; color: #0077cc;">${pub.title}</a>
             </h3>
@@ -119,48 +121,43 @@ function loadMorePublications() {
             <p style="font-size: 12px; margin: 2px 0;"><strong>Journal:</strong> ${pub.journal}</p>
             <p style="font-size: 12px; margin: 2px 0;"><strong>Authors:</strong> ${formattedAuthors}</p>
         `;
-
-        publicationsContainer.appendChild(publicationDiv);
+        container.appendChild(div);
     }
 
     loadedCount += loadStep;
 }
 
-// Function to handle keyword filter selection
+// === Keyword filter change handler ===
 document.getElementById("keywordFilter").addEventListener("change", (event) => {
     const selectedKeyword = event.target.value.toLowerCase();
-    
+
     if (selectedKeyword) {
-        filteredPublications = allPublications.filter(pub => 
+        filteredPublications = allPublications.filter(pub =>
             pub.keywords.some(keyword => keyword.toLowerCase().includes(selectedKeyword)) ||
             pub.title.toLowerCase().includes(selectedKeyword)
         );
     } else {
-        filteredPublications = allPublications; // No filter, show all publications
+        filteredPublications = allPublications;
     }
 
-    loadedCount = 0; // Reset loaded count for filtered results
-    document.getElementById("publications").innerHTML = ""; // Clear the publications container
-    loadMorePublications(); // Reload filtered publications
+    loadedCount = 0;
+    document.getElementById("publications").innerHTML = "";
+    loadMorePublications();
 });
 
-// Function to set up infinite scroll
+// === Infinite scroll setup ===
 function setupInfiniteScroll() {
-    window.onscroll = function() {
+    window.onscroll = function () {
         const scrollHeight = document.documentElement.scrollHeight;
         const scrollPosition = window.innerHeight + window.scrollY;
 
-        // If scrolled near bottom of page
-        if (scrollHeight - scrollPosition < 100) {
-            if (loadedCount < filteredPublications.length) {
-                loadMorePublications();
-            }
+        if (scrollHeight - scrollPosition < 100 && loadedCount < filteredPublications.length) {
+            loadMorePublications();
         }
     };
 }
 
-// Call fetchPublications initially with the scopusIds array
+// === Run everything ===
 fetchPublications(scopusIds);
-
-// Call setupInfiniteScroll to enable the infinite scrolling feature
 setupInfiniteScroll();
+
